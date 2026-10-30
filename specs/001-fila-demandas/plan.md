@@ -36,7 +36,8 @@ Esquema fixo, definido pela prova (ver [data-model.md](data-model.md)).
 
 **Testing**: Vitest 4.1.x (`vitest@4.1`) com `fastify.inject` contra o MySQL real do
 docker-compose; teste de concorrência repete a corrida 25 vezes. Front: sem testes
-automatizados nesta entrega (ver Complexity Tracking); o runner do Angular não é configurado.
+de componente nesta entrega (a constituição v1.1.0 os torna opcionais); o runner do Angular não
+é configurado. O gate do front é `ng build` e a checagem de tipos.
 
 **Target Platform**: Docker apenas para o MySQL. API e web rodam com `npm` direto no Node
 local; não há container para eles.
@@ -62,11 +63,11 @@ SQL sempre parametrizado; ordenação por lista fechada (nunca interpolar entrad
 | III. SQL à mão, parametrizado | `mysql2` nos repositórios de `infra`; ordenação via mapa fixo | OK |
 | IV. Sem trava durante a interação | `FOR UPDATE` só dentro de uma requisição curta; reserva sem lock explícito | OK |
 | V. `demand_trace` na mesma transação | Porta `UnidadeDeTrabalho` abre a transação; mudança + trace no mesmo commit | OK |
-| VI. Integração contra MySQL real | Vitest + `inject` + MySQL do compose; corrida repetida 25× | OK no backend; **desvio no frontend** (sem testes), registrado em Complexity Tracking |
+| VI. Testes no backend, build no frontend | Vitest + `inject` + MySQL do compose; corrida repetida 25×; `ng build` e tipos no front | OK |
 | VII. Angular moderno | standalone, OnPush, signals, reactive forms, `@if`/`@for` | OK |
 | VIII. pt-BR e simplicidade | domínio e mensagens em pt-BR; sem camadas extras | OK |
 
-Uma exceção, no frontend, registrada em Complexity Tracking.
+Sem violações.
 
 ## Decisões aprovadas
 
@@ -157,9 +158,4 @@ validação do Zod é tratado no mesmo handler. Resposta nunca expõe stack nem 
 
 ## Complexity Tracking
 
-| Violação | Why Needed | Simpler Alternative Rejected Because |
-|----------|------------|-------------------------------------|
-| Princípio VI exige teste também no frontend; a entrega não terá testes no Angular | Decisão do Marcus: testes do front não são exigidos e o runner não é configurado, para caber nas 4h | Testes de componente (formulário de encerramento, tratamento do 409) foram descartados por custo de tempo; o comportamento é conferido no roteiro manual do quickstart |
-
-Sugestão: se o desvio for permanente, emendar o princípio VI da constituição (PATCH/MINOR) em
-vez de manter uma exceção por feature.
+Nenhuma violação da constituição a justificar.

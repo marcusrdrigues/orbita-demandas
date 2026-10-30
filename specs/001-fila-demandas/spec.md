@@ -20,16 +20,16 @@
 
 ### User Story 1 - Consultar a fila de demandas (Priority: P1)
 
-Um operador abre a fila e vê as demandas em páginas, filtrando por fila e por situação (aberta, reservada, encerrada) e ordenando por número ou por data da última alteração. A tela informa o total de demandas que atendem ao filtro.
+Um operador abre a fila e vê as demandas em páginas, filtrando por fila e por status (aberta, reservada, encerrada) e ordenando por número ou por data da última alteração. A tela informa o total de demandas que atendem ao filtro.
 
 **Why this priority**: sem enxergar a fila não há como reservar nem encerrar nada; é a base de valor da funcionalidade.
 
-**Independent Test**: com a base de exemplo (5 mil demandas), abrir a lista, trocar de página, filtrar por fila e situação e mudar a ordenação; conferir que o total e o conteúdo de cada página batem com o filtro.
+**Independent Test**: com a base de exemplo (5 mil demandas), abrir a lista, trocar de página, filtrar por fila e status e mudar a ordenação; conferir que o total e o conteúdo de cada página batem com o filtro.
 
 **Acceptance Scenarios**:
 
 1. **Given** 5 mil demandas cadastradas, **When** o operador abre a lista sem filtro, **Then** vê somente a primeira página e o total geral de demandas.
-2. **Given** demandas em várias filas e situações, **When** o operador filtra por uma fila e por "aberta", **Then** vê apenas demandas dessa fila e situação, e o total reflete o filtro.
+2. **Given** demandas em várias filas e status, **When** o operador filtra por uma fila e por "aberta", **Then** vê apenas demandas dessa fila e status, e o total reflete o filtro.
 3. **Given** uma lista exibida, **When** o operador ordena por data de alteração, **Then** as demandas aparecem na ordem pedida, de forma estável entre páginas.
 4. **Given** um pedido com filtro ou ordenação que o sistema não reconhece, **When** a consulta é feita, **Then** o sistema recusa o pedido com erro de requisição inválida e mensagem clara, sem devolver dados.
 
@@ -104,7 +104,7 @@ Cada reserva e cada encerramento deixa um registro de quem fez, o quê, quando e
 ### Functional Requirements
 
 - **FR-001**: O sistema MUST listar demandas com paginação feita no servidor, devolvendo a página pedida e o total de demandas que atendem ao filtro.
-- **FR-002**: O sistema MUST permitir filtrar a lista por fila e por situação (aberta, reservada, encerrada).
+- **FR-002**: O sistema MUST permitir filtrar a lista por fila e por status (aberta, reservada, encerrada).
 - **FR-003**: O sistema MUST permitir ordenar a lista por número da demanda ou por data da última alteração, nos dois sentidos, com desempate determinístico para que a paginação seja estável.
 - **FR-004**: O sistema MUST recusar com erro de requisição inválida qualquer filtro, ordenação ou parâmetro de paginação desconhecido ou fora do intervalo permitido.
 - **FR-005**: O sistema MUST permitir que o usuário autenticado com o escopo `demands` ou `demands:supervise` reserve uma demanda aberta, de qualquer fila, em seu próprio nome; não há restrição de acesso por fila nesta versão.
@@ -113,10 +113,10 @@ Cada reserva e cada encerramento deixa um registro de quem fez, o quê, quando e
 - **FR-008**: O sistema MUST permitir encerrar uma demanda reservada com resultado "sucesso" ou "insucesso".
 - **FR-009**: O sistema MUST exigir o motivo (até 40 caracteres) no encerramento com insucesso e aceitar observação opcional de até 500 caracteres; o corpo do pedido MUST ser validado no servidor. Motivo informado junto com resultado "sucesso" MUST ser recusado como requisição inválida, sem alterar a demanda.
 - **FR-010**: O sistema MUST permitir o encerramento somente ao dono da reserva ou a quem tem o escopo `demands:supervise`; os demais recebem negativa de permissão.
-- **FR-011**: O sistema MUST registrar no histórico (quem, qual demanda, qual ação, observação e quando) toda mudança de situação de uma demanda, de forma atômica com a mudança: ou ambos são gravados, ou nenhum.
+- **FR-011**: O sistema MUST registrar no histórico (quem, qual demanda, qual ação, observação e quando) toda mudança de status de uma demanda, de forma atômica com a mudança: ou ambos são gravados, ou nenhum.
 - **FR-012**: O sistema MUST identificar o usuário a partir do cabeçalho `x-user-id` e seus escopos a partir do cabeçalho `x-scopes` (lista separada por vírgula), recusando como não autenticado pedido sem usuário válido. Listar, reservar e encerrar MUST exigir o escopo `demands` ou `demands:supervise`; sem nenhum dos dois, o pedido é negado por falta de permissão. Esta é uma autenticação simplificada, própria desta versão mínima.
 - **FR-013**: O sistema MUST fornecer uma base de dados de exemplo com 5 mil demandas, usuários de exemplo e ambiente local de execução do banco, para uso em desenvolvimento e testes.
-- **FR-014**: A tela MUST exibir a lista paginada com filtro de fila e de situação e, em cada demanda aberta, o botão Reservar.
+- **FR-014**: A tela MUST exibir a lista paginada, mostrando o título, a fila, o status e o responsável de cada demanda, com filtro de fila e de status e, em cada demanda aberta, o botão Reservar.
 - **FR-015**: Ao receber conflito numa reserva, a tela MUST exibir a mensagem com o nome de quem ficou com a demanda e atualizar aquela linha sem recarregar a página.
 - **FR-016**: O formulário de encerramento MUST exigir o motivo somente quando o resultado for insucesso, limitar o motivo a 40 e a observação a 500 caracteres, limpar o motivo ao trocar de insucesso para sucesso e manter o botão de confirmar desabilitado enquanto estiver inválido.
 - **FR-017**: O sistema MUST ter ao menos um teste automatizado que prove que duas reservas simultâneas da mesma demanda resultam em um sucesso e um conflito.
@@ -125,7 +125,7 @@ Cada reserva e cada encerramento deixa um registro de quem fez, o quê, quando e
 ### Key Entities *(include if feature involves data)*
 
 - **Usuário**: pessoa que opera a fila; tem identificador e nome (exibido ao perdedor de uma disputa).
-- **Demanda**: item de trabalho que pertence a uma fila. Tem situação (aberta, reservada, encerrada), responsável atual quando reservada, resultado (sucesso ou insucesso), motivo do insucesso (até 40 caracteres), observação de até 500 caracteres e data da última alteração.
+- **Demanda**: item de trabalho que pertence a uma fila e tem um título (texto curto que a descreve). Tem status (aberta, reservada, encerrada), responsável atual quando reservada, resultado (sucesso ou insucesso), motivo do insucesso (até 40 caracteres), observação de até 500 caracteres e data da última alteração.
 - **Histórico da demanda**: registro imutável de cada mudança; liga demanda, usuário, ação, observação e data.
 
 ## Success Criteria *(mandatory)*
@@ -134,14 +134,14 @@ Cada reserva e cada encerramento deixa um registro de quem fez, o quê, quando e
 
 - **SC-001**: Em 100% das tentativas simultâneas de reserva da mesma demanda, exatamente uma pessoa fica com ela e as demais são informadas de quem ficou.
 - **SC-002**: Com a base de 5 mil demandas, o operador vê qualquer página da lista, com filtro e ordenação aplicados, em até 2 segundos.
-- **SC-003**: 100% das mudanças de situação de demandas têm um registro de histórico correspondente, e 0% das operações recusadas ou falhas deixam alteração ou registro parcial.
+- **SC-003**: 100% das mudanças de status de demandas têm um registro de histórico correspondente, e 0% das operações recusadas ou falhas deixam alteração ou registro parcial.
 - **SC-004**: O operador consegue reservar uma demanda em um único clique, e uma disputa perdida é explicada na própria tela sem recarregar a página.
 - **SC-005**: Nenhum encerramento inválido (insucesso sem motivo, observação acima de 500 caracteres, usuário sem permissão) é aceito.
 
 ## Assumptions
 
 - A demanda pertence a uma fila (campo de fila) e tem número identificador, além dos campos citados na descrição; filas são valores de texto livres vindos da base de exemplo.
-- O filtro por fila aceita um valor exato; o filtro por situação aceita um dos três estados. Valores de fila inexistentes devolvem lista vazia, não erro.
+- O filtro por fila aceita um valor exato; o filtro por status aceita um dos três estados. Valores de fila inexistentes devolvem lista vazia, não erro. Na tela, o filtro de fila é uma lista fixa com as filas da base de exemplo (suporte, vendas, financeiro, retencao), definida no próprio front; não há consulta de filas na API.
 - Paginação padrão de 20 itens, com máximo de 100 por página; ordenação padrão por número da demanda crescente.
 - Autenticação simplificada por cabeçalhos é aceitável por ser uma versão mínima; em produção seria substituída por autenticação real e os cabeçalhos não seriam confiáveis (risco conhecido, fora de escopo).
 - Quem tem `demands:supervise` pode listar e reservar como qualquer operador (os dois escopos bastam para essas rotas); o escopo `demands:supervise` amplia o encerramento a demandas de outros.

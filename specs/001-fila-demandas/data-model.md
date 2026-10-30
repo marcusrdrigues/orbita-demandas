@@ -79,5 +79,5 @@ linhas isso é aceitável; conferir com `EXPLAIN` na implementação, sem criar 
 
 - 5 usuários de exemplo (operadores e um supervisor), nomes fictícios, ids explícitos
   (`app_user.id` não é auto incremento).
-- 5.000 demandas em ~5 filas (`queue` até 40 caracteres), maioria no status 1, algumas nos
+- 5.000 demandas distribuídas nas 4 filas fixas `suporte`, `vendas`, `financeiro` e `retencao` (`queue` até 40 caracteres), maioria no status 1, algumas nos
   status 2 e 3, coerentes com as invariantes. Nenhum dado pessoal real.

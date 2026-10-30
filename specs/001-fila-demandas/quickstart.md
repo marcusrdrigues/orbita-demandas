@@ -34,9 +34,10 @@ cd web && npm install && npm start        # front, com proxy para a API
 
 ```bash
 cd api && npm test      # Vitest contra o MySQL do compose
+cd web && npx ng build  # build e checagem de tipos do front
 ```
 
-O front não tem testes automatizados nesta entrega; é conferido pelo roteiro manual da seção 3.
+O front não tem testes de componente nesta entrega; além do build, é conferido pelo roteiro manual da seção 3.
 
 Esperado: todos verdes, incluindo o teste de concorrência (25 rodadas, cada uma com
 exatamente um 200 e um 409 e um único `demand_trace`).

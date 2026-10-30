@@ -1,9 +1,13 @@
 <!--
 Sync Impact Report
-- Version change: (template não preenchido) → 1.0.0
-- Princípios adicionados: I a VIII (todos novos)
-- Seções adicionadas: Restrições Técnicas e de Segurança; Fluxo de Desenvolvimento
+- Version change: 1.0.0 → 1.1.0
+- Princípios modificados: VI (testes no frontend deixam de ser MUST; build e checagem de
+  tipos do frontend passam a ser MUST; título e motivo ajustados)
+- Seções adicionadas: nenhuma
 - Seções removidas: nenhuma
+- Justificativa do MINOR: o princípio foi mantido e ganhou um gate novo (build/tipos do
+  front); a parte afrouxada (testes de componente) é pontual. Se preferir ler como
+  redefinição incompatível, seria MAJOR (2.0.0).
 - TODOs adiados: nenhum
 -->
 
@@ -51,13 +55,15 @@ pode alterar uma demanda sem deixar rastro.
 
 *Motivo*: o histórico é a auditoria da demanda e só é confiável se for atômico com a mudança.
 
-### VI. Testes de Integração contra MySQL Real
-Todo comportamento novo ou alterado MUST entrar com teste, no backend e no frontend. Os testes
-de integração do backend MUST rodar contra uma instância real de MySQL; mock ou banco em
-memória não substitui o MySQL nesses testes. Os testes MUST ser executados antes de a entrega
-ser declarada concluída.
+### VI. Testes no Backend, Build no Frontend
+Backend: todo comportamento novo ou alterado MUST entrar com teste, e os testes de integração
+MUST rodar contra uma instância real de MySQL; mock ou banco em memória não substitui o MySQL
+nesses testes. Frontend: o build e a checagem de tipos MUST passar; testes de componente
+SHOULD ser escritos quando o prazo permitir. Os testes e o build MUST ser executados antes de a
+entrega ser declarada concluída.
 
-*Motivo*: SQL à mão, transações e `demand_trace` só se validam contra o banco de verdade.
+*Motivo*: SQL à mão, transações e `demand_trace` só se validam contra o banco de verdade; no
+frontend, com prazo de 4h, o build e os tipos são o mínimo que pega erro de template e de contrato.
 
 ### VII. Frontend Angular Moderno
 O frontend MUST usar componentes standalone, `ChangeDetectionStrategy.OnPush`, signals para
@@ -98,4 +104,4 @@ de princípio; MINOR para princípio ou seção nova, ou orientação materialme
 para esclarecimentos e ajustes de redação. Toda revisão de código e todo plano MUST verificar a
 conformidade com os princípios.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-10-30
+**Version**: 1.1.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-10-30

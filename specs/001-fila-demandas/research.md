@@ -36,8 +36,10 @@ Versões conferidas em 2026-10-30 (`npm view` e documentação oficial via Conte
   Zero lock mantido além do commit.
 - **Alternatives**: SELECT + UPDATE (corrida); `SELECT FOR UPDATE` na reserva (funciona, mas
   segura lock sem necessidade).
-- **Cuidado**: `affectedRows` em MySQL conta linhas *alteradas* por padrão. Como `status`
-  muda de 1 para 2, é seguro aqui; não usar essa técnica onde o valor possa não mudar.
+- **Cuidado**: no `mysql2`, `affectedRows` conta as linhas *encontradas* pelo `WHERE` (flag
+  `FOUND_ROWS`), não as alteradas. Como o `WHERE` exige `status = 1`, encontrada implica alterada
+  (o status passa de 1 para 2). Premissa informada pelo Marcus; não conferi na documentação do
+  `mysql2`, mas o teste das 25 corridas (T028) a exercita.
 
 ### Encerramento com FOR UPDATE
 - **Decision**: transação curta: `SELECT ... FOR UPDATE`, decide 404/409/403, `UPDATE`, `INSERT trace`, commit.
@@ -76,7 +78,7 @@ Versões conferidas em 2026-10-30 (`npm view` e documentação oficial via Conte
 - **A decidir em contracts**: o 409 de reserva devolve a demanda atual no corpo, para atualizar
   a linha sem nova requisição.
 - **Testes do front**: não exigidos; o runner do Angular não é configurado (ao gerar o projeto,
-  usar a opção de não criar arquivos de teste). Desvio da constituição registrado no plano.
+  usar a opção de não criar arquivos de teste). A constituição v1.1.0 torna esses testes opcionais; o gate do front é `ng build`.
 - **409 de reserva**: devolve `demanda`, `message` e `holder {id, name}` (ver contrato).
 
 ## Riscos e pendências

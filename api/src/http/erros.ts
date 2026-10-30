@@ -5,6 +5,7 @@ import {
   DemandaJaReservada,
   DemandaNaoEncontrada,
   DemandaNaoReservada,
+  EncerramentoInvalido,
   ErroDeDominio,
   NaoAutenticado,
   SemPermissao,
@@ -22,6 +23,7 @@ const MENSAGENS_DE_REQUISICAO: Record<number, string> = {
 
 function statusDoErroDeDominio(erro: ErroDeDominio): number {
   if (erro instanceof NaoAutenticado) return 401;
+  if (erro instanceof EncerramentoInvalido) return 400;
   if (erro instanceof SemPermissao) return 403;
   if (erro instanceof DemandaNaoEncontrada) return 404;
   if (

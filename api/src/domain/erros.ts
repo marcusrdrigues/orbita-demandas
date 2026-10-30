@@ -54,6 +54,11 @@ export class DemandaEncerrada extends ErroDeDominio {
   }
 }
 
+/** Dados de encerramento incoerentes (por exemplo, insucesso sem motivo). */
+export class EncerramentoInvalido extends ErroDeDominio {
+  readonly codigo = 'REQUISICAO_INVALIDA';
+}
+
 export class DemandaNaoReservada extends ErroDeDominio {
   readonly codigo = 'DEMANDA_NAO_RESERVADA';
 

@@ -53,7 +53,6 @@ function paraDemanda(linha: LinhaDeDemanda): Demanda {
   };
 }
 
-// Falta preencher (US3, T037): buscarParaAtualizar e encerrar.
 export class RepositorioDemandasMysql implements RepositorioDemandas {
   constructor(protected readonly executor: Executor) {}
 
@@ -114,11 +113,23 @@ export class RepositorioDemandasMysql implements RepositorioDemandas {
     return linha ? paraDemanda(linha) : null;
   }
 
-  buscarParaAtualizar(_demandaId: number): Promise<Demanda | null> {
-    return Promise.reject(new Error('RepositorioDemandas.buscarParaAtualizar ainda não implementado'));
+  async buscarParaAtualizar(demandaId: number): Promise<Demanda | null> {
+    // Só a tabela demand: o FOR UPDATE não deve travar também a linha do usuário. Sem o nome do
+    // responsável (worker_name nulo); quem precisa dele relê com buscarPorId depois do commit.
+    const [linhas] = await this.executor.execute<LinhaDeDemanda[]>(
+      'SELECT d.id, d.title, d.queue, d.status, d.worker_id, NULL AS worker_name,' +
+        ' d.outcome, d.failure_reason, d.note, d.updated_at' +
+        ' FROM demand d WHERE d.id = ? FOR UPDATE',
+      [demandaId],
+    );
+    const linha = linhas[0];
+    return linha ? paraDemanda(linha) : null;
   }
 
-  encerrar(_demandaId: number, _dados: DadosDeEncerramento): Promise<void> {
-    return Promise.reject(new Error('RepositorioDemandas.encerrar ainda não implementado'));
+  async encerrar(demandaId: number, dados: DadosDeEncerramento): Promise<void> {
+    await this.executor.execute(
+      'UPDATE demand SET status = 3, outcome = ?, failure_reason = ?, note = ? WHERE id = ?',
+      [dados.outcome, dados.failureReason, dados.note, demandaId],
+    );
   }
 }

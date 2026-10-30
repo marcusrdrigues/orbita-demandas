@@ -43,6 +43,23 @@ export const esquemaParametroDeDemanda = z.object({
   id: z.coerce.number().int().positive().max(2_147_483_647),
 });
 
+// Corpo do encerramento. As regras condicionais do motivo repetem as do caso de uso de propósito:
+// aqui dão a resposta 400 detalhada por campo; lá protegem qualquer outro chamador.
+export const esquemaCorpoDeEncerramento = z
+  .strictObject({
+    outcome: z.enum(['success', 'failure']),
+    failureReason: z.string().trim().min(1).max(40).optional(),
+    note: z.string().trim().max(500).optional(),
+  })
+  .superRefine((corpo, contexto) => {
+    if (corpo.outcome === 'failure' && corpo.failureReason === undefined) {
+      contexto.addIssue({ code: 'custom', path: ['failureReason'], message: 'Informe o motivo do insucesso.' });
+    }
+    if (corpo.outcome === 'success' && corpo.failureReason !== undefined) {
+      contexto.addIssue({ code: 'custom', path: ['failureReason'], message: 'O motivo só se aplica ao insucesso.' });
+    }
+  });
+
 // 409: além do erro, devolve a demanda atual (e o dono, quando está reservada) para o front
 // atualizar a linha sem nova consulta.
 export const esquemaConflitoDeReserva = esquemaErro.extend({

@@ -93,6 +93,19 @@ export async function lerDemanda(pool: Pool, id: number): Promise<LinhaDeDemanda
   return (linhas as LinhaDeDemanda[])[0];
 }
 
+export interface LinhaCompletaDeDemanda extends LinhaDeDemanda {
+  failure_reason: string | null;
+  note: string | null;
+}
+
+export async function lerDemandaCompleta(pool: Pool, id: number): Promise<LinhaCompletaDeDemanda | undefined> {
+  const [linhas] = await pool.execute(
+    'SELECT id, status, worker_id, outcome, failure_reason, note FROM demand WHERE id = ?',
+    [id],
+  );
+  return (linhas as LinhaCompletaDeDemanda[])[0];
+}
+
 export async function lerTrace(pool: Pool, demandaId: number): Promise<LinhaDeTrace[]> {
   const [linhas] = await pool.execute(
     'SELECT demand_id, user_id, action, note FROM demand_trace WHERE demand_id = ? ORDER BY id',

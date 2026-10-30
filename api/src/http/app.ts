@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { RepositorioDemandas } from '../application/portas/repositorio-demandas.js';
 import type { RepositorioUsuarios } from '../application/portas/repositorio-usuarios.js';
 import type { UnidadeDeTrabalho } from '../application/portas/unidade-de-trabalho.js';
+import { EncerrarDemanda } from '../application/casos-de-uso/encerrar-demanda.js';
 import { ListarDemandas } from '../application/casos-de-uso/listar-demandas.js';
 import { ReservarDemanda } from '../application/casos-de-uso/reservar-demanda.js';
 import { criarHookDeAutenticacao } from './autenticacao.js';
@@ -42,6 +43,7 @@ export function construirApp(dependencias: Dependencias, opcoes: OpcoesDoApp = {
     protegido.register(rotasDemandas, {
       listarDemandas: new ListarDemandas(dependencias.demandas),
       reservarDemanda: new ReservarDemanda(dependencias.demandas, dependencias.unidadeDeTrabalho),
+      encerrarDemanda: new EncerrarDemanda(dependencias.demandas, dependencias.unidadeDeTrabalho),
     });
   });
 

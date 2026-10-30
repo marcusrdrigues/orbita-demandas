@@ -4,8 +4,10 @@ import { z } from 'zod';
 import type { RepositorioDemandas } from '../application/portas/repositorio-demandas.js';
 import type { RepositorioUsuarios } from '../application/portas/repositorio-usuarios.js';
 import type { UnidadeDeTrabalho } from '../application/portas/unidade-de-trabalho.js';
+import { ListarDemandas } from '../application/casos-de-uso/listar-demandas.js';
 import { criarHookDeAutenticacao } from './autenticacao.js';
 import { registrarTratadorDeErros } from './erros.js';
+import { rotasDemandas } from './rotas/demandas.js';
 
 // Mensagens de validação do Zod em português.
 z.config(z.locales.ptBR());
@@ -36,7 +38,9 @@ export function construirApp(dependencias: Dependencias, opcoes: OpcoesDoApp = {
   app.register(async (protegido) => {
     protegido.decorateRequest('operador');
     protegido.addHook('onRequest', criarHookDeAutenticacao(dependencias.usuarios));
-    // As rotas de demandas são registradas aqui a partir da US1 (T022).
+    protegido.register(rotasDemandas, {
+      listarDemandas: new ListarDemandas(dependencias.demandas),
+    });
   });
 
   return app;

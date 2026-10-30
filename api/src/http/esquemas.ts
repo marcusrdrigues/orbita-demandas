@@ -13,6 +13,26 @@ export const esquemaDemanda = z.object({
   updatedAt: z.date(),
 });
 
+// Query estrita: qualquer parâmetro fora desta lista, ou com valor inválido, vira 400.
+export const esquemaConsultaDeDemandas = z.strictObject({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  queue: z.string().min(1).max(40).optional(),
+  status: z
+    .enum(['1', '2', '3'])
+    .transform((valor) => Number(valor) as 1 | 2 | 3)
+    .optional(),
+  sort: z.enum(['id', 'updated_at']).default('id'),
+  order: z.enum(['asc', 'desc']).default('asc'),
+});
+
+export const esquemaPaginaDeDemandas = z.object({
+  items: z.array(esquemaDemanda),
+  total: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
+});
+
 export const esquemaErro = z.object({
   code: z.string(),
   message: z.string(),

@@ -4,13 +4,19 @@ Pré-requisitos: Docker (só para o MySQL), Node 22+ e npm. API e front rodam di
 e de dados em [data-model.md](data-model.md). Os comandos abaixo dependem de os scripts serem
 criados na implementação (`/speckit-tasks` → `/speckit-implement`).
 
-## 1. Subir o banco
+## 1. Configurar o ambiente e subir o banco
 
 ```bash
+cp .env.example .env          # PowerShell: Copy-Item .env.example .env
 docker compose up -d
 ```
 
-Esperado: MySQL 8 saudável, com as tabelas criadas e 5.000 linhas em `demand`.
+Os valores do `.env.example` funcionam como estão (são só para desenvolvimento local; o MySQL
+escuta apenas em `127.0.0.1:3307`). O `.env` fica fora do repositório.
+
+Esperado: MySQL 8 saudável (`docker compose ps`), com as tabelas criadas e 5.000 linhas em
+`demand`. Os scripts de `db/` só rodam na primeira criação do volume; para recarregar:
+`docker compose down -v && docker compose up -d`.
 
 ## 2. Subir a API e o front
 

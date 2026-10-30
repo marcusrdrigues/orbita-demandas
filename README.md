@@ -120,6 +120,6 @@ Hoje são 112 testes da API em 9 arquivos, rodando contra o MySQL real (sem mock
 
 Usei o **GitHub Spec Kit com o Claude Code** para a especificação, o plano, as tarefas e a implementação, no fluxo de Spec-Driven Development: constituição, `specify`, `clarify`, `plan`, `tasks`, `analyze` e `implement`, nessa ordem, e só então código. O Claude Code escreveu a maior parte do código e dos testes a partir dessas especificações.
 
-Eu **revisei, decidi e commitei cada etapa**. As decisões de stack, o esquema do banco, a ordem 404 → 409 → 403 e as regras de escopo vieram de mim; o que a IA propôs e eu aceitei ou mudei está nos documentos da pasta [`specs/001-fila-demandas/`](specs/001-fila-demandas/).
+Eu **revisei, aprovei e commitei cada etapa**. O esquema do banco veio do enunciado da prova. As decisões de stack, a ordem 404 → 409 → 403 e as regras de escopo foram tomadas nas etapas de `clarify` e `plan`, depois de discutidas com o **Claude (chat)**, que usei como consultor: ele revisou comigo as perguntas do `clarify`, o plano e o resumo de cada fase antes de eu aprovar. O que a IA propôs e eu aceitei ou mudei está registrado na pasta [`specs/001-fila-demandas/`](specs/001-fila-demandas/).
 
 Como não confiei na saída só porque estava escrita: pedi os experimentos de mutação descritos acima, rodei os testes e o build a cada fase, e conferi o comportamento da tela no navegador. O que **não** foi verificado está dito neste README (Node 22, front sem testes automatizados, mutação feita à mão).

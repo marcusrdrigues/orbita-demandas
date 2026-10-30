@@ -9,7 +9,7 @@ Duas pessoas nunca ficam com a mesma demanda, e toda mudança deixa um registro 
 | Parte | Tecnologia | Pasta |
 |---|---|---|
 | API | Node, TypeScript, Fastify 5, Zod 4, `mysql2` (SQL escrito à mão, sem ORM) | [`api/`](api) |
-| Web | Angular 21, standalone, zoneless, `OnPush`, signals, formulários reativos | [`web/`](web) |
+| Web | Angular 21, standalone, zoneless, `OnPush`, signals, formulários reativos, ícones [`lucide-angular`](https://lucide.dev) | [`web/`](web) |
 | Banco | MySQL 8.4 no Docker, com 5.000 demandas de exemplo | [`db/`](db) e [`docker-compose.yml`](docker-compose.yml) |
 
 O que a aplicação faz:
@@ -89,7 +89,8 @@ Resumo das principais. O raciocínio completo, com alternativas descartadas, est
 8. **Esquema do banco fixo.** Sem colunas, índices nem chaves estrangeiras além das definidas. Por isso ordenar por `updated_at` faz `filesort`; medi (~15 ms no pior caso com 5 mil linhas) e registrei em [`research.md`](specs/001-fila-demandas/research.md#resultado-do-explain-da-listagem-t045).
 9. **Erros tratados num lugar só.** Erros de domínio com nome claro viram HTTP num único error handler; a resposta nunca expõe stack, SQL nem nome de classe, e as mensagens são em pt-BR.
 10. **O 409 de reserva devolve a demanda atual** (`demanda`, `message`, `holder`), para o front atualizar só aquela linha, sem recarregar a lista.
-11. **Frontend moderno e sem testes de componente.** O gate do front é o `ng build` (build e tipos). Os testes de componente ficaram de fora por prazo; a constituição (v1.1.0) os trata como opcionais.
+11. **Interface com tokens de design e tema claro/escuro.** Cores, raios, sombras, espaçamento (escala de 4px) e tipografia ficam em variáveis CSS em [`web/src/styles.css`](web/src/styles.css); o tema escuro vem de `prefers-color-scheme`. Botão, pílula de status, aviso, esqueleto, estado vazio e modal são componentes reutilizáveis em [`web/src/app/ui/`](web/src/app/ui). O modal usa o `<dialog>` nativo (foco preso, Esc e fundo inerte vêm do navegador). Conferi o contraste (WCAG AA) dos pares de cor nos dois temas e a ausência de rolagem horizontal de 360px a 1280px.
+12. **Frontend moderno e sem testes de componente.** O gate do front é o `ng build` (build e tipos). Os testes de componente ficaram de fora por prazo; a constituição (v1.1.0) os trata como opcionais.
 
 ## Como provei a concorrência
 

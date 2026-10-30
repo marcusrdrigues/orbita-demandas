@@ -1,4 +1,4 @@
-import type { RowDataPacket } from 'mysql2/promise';
+import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import type {
   DadosDeEncerramento,
   FiltroListagem,
@@ -53,7 +53,7 @@ function paraDemanda(linha: LinhaDeDemanda): Demanda {
   };
 }
 
-// Preenchido pelas histórias: reservarSeAberta e buscarPorId (T030); buscarParaAtualizar e encerrar (T037).
+// Falta preencher (US3, T037): buscarParaAtualizar e encerrar.
 export class RepositorioDemandasMysql implements RepositorioDemandas {
   constructor(protected readonly executor: Executor) {}
 
@@ -92,12 +92,26 @@ export class RepositorioDemandasMysql implements RepositorioDemandas {
     return { items: linhas.map(paraDemanda), total: totais[0]?.total ?? 0 };
   }
 
-  reservarSeAberta(_demandaId: number, _usuarioId: number): Promise<boolean> {
-    return Promise.reject(new Error('RepositorioDemandas.reservarSeAberta ainda não implementado'));
+  async reservarSeAberta(demandaId: number, usuarioId: number): Promise<boolean> {
+    // Uma instrução só: o InnoDB serializa os UPDATEs na mesma linha, então só um enxerga
+    // status = 1. No mysql2, affectedRows conta as linhas encontradas pelo WHERE (flag FOUND_ROWS);
+    // como o WHERE exige status = 1, encontrada implica alterada.
+    const [resultado] = await this.executor.execute<ResultSetHeader>(
+      'UPDATE demand SET status = 2, worker_id = ? WHERE id = ? AND status = 1',
+      [usuarioId, demandaId],
+    );
+    return resultado.affectedRows === 1;
   }
 
-  buscarPorId(_demandaId: number): Promise<Demanda | null> {
-    return Promise.reject(new Error('RepositorioDemandas.buscarPorId ainda não implementado'));
+  async buscarPorId(demandaId: number): Promise<Demanda | null> {
+    const [linhas] = await this.executor.execute<LinhaDeDemanda[]>(
+      'SELECT' +
+        COLUNAS_DA_DEMANDA +
+        ' FROM demand d LEFT JOIN app_user u ON u.id = d.worker_id WHERE d.id = ?',
+      [demandaId],
+    );
+    const linha = linhas[0];
+    return linha ? paraDemanda(linha) : null;
   }
 
   buscarParaAtualizar(_demandaId: number): Promise<Demanda | null> {

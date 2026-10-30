@@ -5,6 +5,7 @@ import type { RepositorioDemandas } from '../application/portas/repositorio-dema
 import type { RepositorioUsuarios } from '../application/portas/repositorio-usuarios.js';
 import type { UnidadeDeTrabalho } from '../application/portas/unidade-de-trabalho.js';
 import { ListarDemandas } from '../application/casos-de-uso/listar-demandas.js';
+import { ReservarDemanda } from '../application/casos-de-uso/reservar-demanda.js';
 import { criarHookDeAutenticacao } from './autenticacao.js';
 import { registrarTratadorDeErros } from './erros.js';
 import { rotasDemandas } from './rotas/demandas.js';
@@ -40,6 +41,7 @@ export function construirApp(dependencias: Dependencias, opcoes: OpcoesDoApp = {
     protegido.addHook('onRequest', criarHookDeAutenticacao(dependencias.usuarios));
     protegido.register(rotasDemandas, {
       listarDemandas: new ListarDemandas(dependencias.demandas),
+      reservarDemanda: new ReservarDemanda(dependencias.demandas, dependencias.unidadeDeTrabalho),
     });
   });
 

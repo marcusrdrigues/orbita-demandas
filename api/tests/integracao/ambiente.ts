@@ -73,6 +73,34 @@ export async function inserirDemanda(pool: Pool, dados: DemandaDeTeste = {}): Pr
   return (resultado as { insertId: number }).insertId;
 }
 
+export interface LinhaDeDemanda {
+  id: number;
+  status: number;
+  worker_id: number | null;
+  outcome: string | null;
+}
+
+export interface LinhaDeTrace {
+  demand_id: number;
+  user_id: number;
+  action: string;
+  note: string | null;
+}
+
+/** Lê a linha crua do banco, para os testes conferirem o estado sem passar pela API. */
+export async function lerDemanda(pool: Pool, id: number): Promise<LinhaDeDemanda | undefined> {
+  const [linhas] = await pool.execute('SELECT id, status, worker_id, outcome FROM demand WHERE id = ?', [id]);
+  return (linhas as LinhaDeDemanda[])[0];
+}
+
+export async function lerTrace(pool: Pool, demandaId: number): Promise<LinhaDeTrace[]> {
+  const [linhas] = await pool.execute(
+    'SELECT demand_id, user_id, action, note FROM demand_trace WHERE demand_id = ? ORDER BY id',
+    [demandaId],
+  );
+  return linhas as LinhaDeTrace[];
+}
+
 export function cabecalhos(usuarioId: number, escopos: string[] = ['demands']): Record<string, string> {
   return { 'x-user-id': String(usuarioId), 'x-scopes': escopos.join(',') };
 }

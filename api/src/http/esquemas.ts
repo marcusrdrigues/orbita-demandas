@@ -37,3 +37,15 @@ export const esquemaErro = z.object({
   code: z.string(),
   message: z.string(),
 });
+
+export const esquemaParametroDeDemanda = z.object({
+  // INT do MySQL: acima disso a demanda não pode existir.
+  id: z.coerce.number().int().positive().max(2_147_483_647),
+});
+
+// 409: além do erro, devolve a demanda atual (e o dono, quando está reservada) para o front
+// atualizar a linha sem nova consulta.
+export const esquemaConflitoDeReserva = esquemaErro.extend({
+  holder: z.object({ id: z.number().int(), name: z.string() }).optional(),
+  demanda: esquemaDemanda,
+});

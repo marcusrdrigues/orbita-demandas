@@ -1,11 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ListaDemandasComponent } from './demandas/lista-demandas.component';
+import { SeletorUsuarioComponent } from './demandas/seletor-usuario.component';
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  imports: [SeletorUsuarioComponent, ListaDemandasComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {
-  protected readonly title = signal('web');
-}
+export class App {}

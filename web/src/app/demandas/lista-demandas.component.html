@@ -1,0 +1,98 @@
+<section aria-labelledby="titulo-lista">
+  <h2 id="titulo-lista">Fila de demandas</h2>
+
+  <form class="filtros" [formGroup]="filtros">
+    <label>
+      Fila
+      <select formControlName="queue">
+        <option value="">Todas</option>
+        @for (fila of filas; track fila) {
+          <option [value]="fila">{{ fila }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Status
+      <select formControlName="status">
+        <option [ngValue]="''">Todos</option>
+        @for (status of statusDisponiveis; track status) {
+          <option [ngValue]="status">{{ rotuloDoStatus(status) }}</option>
+        }
+      </select>
+    </label>
+
+    <p class="total" aria-live="polite">
+      @if (carregando()) {
+        Carregando…
+      } @else {
+        {{ total() }} {{ total() === 1 ? 'demanda' : 'demandas' }}
+      }
+    </p>
+  </form>
+
+  @if (erro(); as mensagem) {
+    <p class="erro" role="alert">{{ mensagem }}</p>
+  }
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" [attr.aria-sort]="ariaSort('id')">
+          <button type="button" class="ordenar" (click)="ordenar('id')">
+            Nº
+            @if (ordenarPor() === 'id') {
+              <span aria-hidden="true">{{ sentido() === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </button>
+        </th>
+        <th scope="col">Título</th>
+        <th scope="col">Fila</th>
+        <th scope="col">Status</th>
+        <th scope="col">Responsável</th>
+        <th scope="col" [attr.aria-sort]="ariaSort('updated_at')">
+          <button type="button" class="ordenar" (click)="ordenar('updated_at')">
+            Atualizada em
+            @if (ordenarPor() === 'updated_at') {
+              <span aria-hidden="true">{{ sentido() === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </button>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (demanda of demandas(); track demanda.id) {
+        <tr>
+          <td>{{ demanda.id }}</td>
+          <td>{{ demanda.title }}</td>
+          <td>{{ demanda.queue }}</td>
+          <td>
+            <span class="status status-{{ demanda.status }}">{{ rotuloDoStatus(demanda.status) }}</span>
+          </td>
+          <td>{{ demanda.workerName ?? '—' }}</td>
+          <td>{{ demanda.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+        </tr>
+      } @empty {
+        @if (!carregando() && !erro()) {
+          <tr>
+            <td colspan="6" class="vazio">Nenhuma demanda encontrada para este filtro.</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+
+  <nav class="paginacao" aria-label="Paginação">
+    <button type="button" (click)="irParaPagina(pagina() - 1)" [disabled]="pagina() <= 1 || carregando()">
+      Anterior
+    </button>
+    <span>Página {{ pagina() }} de {{ totalDePaginas() }}</span>
+    <button
+      type="button"
+      (click)="irParaPagina(pagina() + 1)"
+      [disabled]="pagina() >= totalDePaginas() || carregando()"
+    >
+      Próxima
+    </button>
+  </nav>
+</section>

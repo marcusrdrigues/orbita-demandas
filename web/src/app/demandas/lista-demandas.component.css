@@ -1,0 +1,82 @@
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.total {
+  margin: 0 0 0 auto;
+  font-size: 0.9rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid #d8dde3;
+  text-align: left;
+}
+
+.ordenar {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: #e8ecf1;
+}
+
+.status-1 {
+  background: #dff3e4;
+}
+
+.status-2 {
+  background: #fdf0cf;
+}
+
+.status-3 {
+  background: #e3e6ea;
+}
+
+.vazio {
+  text-align: center;
+  color: #5b6570;
+}
+
+.erro {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #c0392b;
+  border-radius: 4px;
+  background: #fdecea;
+  color: #7a1f16;
+}
+
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}

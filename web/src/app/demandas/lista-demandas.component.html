@@ -1,134 +1,193 @@
-<section aria-labelledby="titulo-lista">
-  <h2 id="titulo-lista">Fila de demandas</h2>
+<section class="lista" aria-labelledby="titulo-lista">
+  <header class="cabecalho">
+    <h1 id="titulo-lista">Fila de demandas</h1>
+    <p class="descricao">Reserve uma demanda para trabalhar nela e encerre quando concluir.</p>
+  </header>
+
+  <!-- Avisos curtos: somem sozinhos e ficam sobre a página, para não empurrar a tabela. -->
+  <div class="avisos">
+    @if (aviso(); as a) {
+      <app-aviso [tipo]="a.tipo" [texto]="a.texto" [chave]="a.id" (fechado)="descartarAviso()" />
+    }
+  </div>
 
   <form class="filtros" [formGroup]="filtros">
-    <label>
-      Fila
-      <select formControlName="queue">
+    <div class="campo">
+      <label for="filtro-fila">Fila</label>
+      <select id="filtro-fila" formControlName="queue">
         <option value="">Todas</option>
         @for (fila of filas; track fila) {
           <option [value]="fila">{{ fila }}</option>
         }
       </select>
-    </label>
+    </div>
 
-    <label>
-      Status
-      <select formControlName="status">
+    <div class="campo">
+      <label for="filtro-status">Status</label>
+      <select id="filtro-status" formControlName="status">
         <option [ngValue]="''">Todos</option>
         @for (status of statusDisponiveis; track status) {
           <option [ngValue]="status">{{ rotuloDoStatus(status) }}</option>
         }
       </select>
-    </label>
+    </div>
 
     <p class="total" aria-live="polite">
       @if (carregando()) {
         Carregando…
       } @else {
-        {{ total() }} {{ total() === 1 ? 'demanda' : 'demandas' }}
+        <strong>{{ totalFormatado() }}</strong> {{ total() === 1 ? 'demanda' : 'demandas' }}
       }
     </p>
   </form>
 
   @if (erro(); as mensagem) {
-    <p class="erro" role="alert">{{ mensagem }}</p>
+    <app-aviso class="erro-da-lista" tipo="erro" [texto]="mensagem" [duracaoMs]="0" [fechavel]="false" />
   }
 
-  @if (aviso(); as mensagem) {
-    <p [class]="mensagem.conflito ? 'aviso aviso-conflito' : 'aviso'" [attr.role]="mensagem.conflito ? 'alert' : 'status'">
-      {{ mensagem.texto }}
-    </p>
-  }
+  <div class="cartao" [class.recarregando]="recarregando()" [attr.aria-busy]="carregando()">
+    <!-- Em telas estreitas o cabeçalho da tabela some; estes botões mantêm a ordenação. -->
+    <div class="ordenacao-compacta" role="group" aria-label="Ordenar por">
+      <button
+        type="button"
+        app-botao
+        variante="fantasma"
+        tamanho="pequeno"
+        [attr.aria-pressed]="ordenarPor() === 'id'"
+        (click)="ordenar('id')"
+      >
+        Nº
+        @if (ordenarPor() === 'id') {
+          <lucide-icon [img]="sentido() === 'asc' ? iconeCrescente : iconeDecrescente" [size]="14" aria-hidden="true" />
+        }
+      </button>
+      <button
+        type="button"
+        app-botao
+        variante="fantasma"
+        tamanho="pequeno"
+        [attr.aria-pressed]="ordenarPor() === 'updated_at'"
+        (click)="ordenar('updated_at')"
+      >
+        Atualizada em
+        @if (ordenarPor() === 'updated_at') {
+          <lucide-icon [img]="sentido() === 'asc' ? iconeCrescente : iconeDecrescente" [size]="14" aria-hidden="true" />
+        }
+      </button>
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th scope="col" [attr.aria-sort]="ariaSort('id')">
-          <button type="button" class="ordenar" (click)="ordenar('id')">
-            Nº
-            @if (ordenarPor() === 'id') {
-              <span aria-hidden="true">{{ sentido() === 'asc' ? '▲' : '▼' }}</span>
-            }
-          </button>
-        </th>
-        <th scope="col">Título</th>
-        <th scope="col">Fila</th>
-        <th scope="col">Status</th>
-        <th scope="col">Responsável</th>
-        <th scope="col" [attr.aria-sort]="ariaSort('updated_at')">
-          <button type="button" class="ordenar" (click)="ordenar('updated_at')">
-            Atualizada em
-            @if (ordenarPor() === 'updated_at') {
-              <span aria-hidden="true">{{ sentido() === 'asc' ? '▲' : '▼' }}</span>
-            }
-          </button>
-        </th>
-        <th scope="col">Ação</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (demanda of demandas(); track demanda.id) {
+    <table>
+      <thead>
         <tr>
-          <td>{{ demanda.id }}</td>
-          <td>{{ demanda.title }}</td>
-          <td>{{ demanda.queue }}</td>
-          <td>
-            <span class="status status-{{ demanda.status }}">{{ rotuloDoStatus(demanda.status) }}</span>
-          </td>
-          <td>{{ demanda.workerName ?? '—' }}</td>
-          <td>{{ demanda.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-          <td>
-            @if (demanda.status === 1) {
-              <button
-                type="button"
-                (click)="reservar(demanda)"
-                [disabled]="estaReservando(demanda.id)"
-                [attr.aria-busy]="estaReservando(demanda.id)"
-              >
-                {{ estaReservando(demanda.id) ? 'Reservando…' : 'Reservar' }}
-              </button>
-            }
-            @if (podeEncerrar(demanda)) {
-              <button
-                type="button"
-                (click)="abrirEncerramento(demanda.id)"
-                [attr.aria-expanded]="encerrandoId() === demanda.id"
-              >
-                Encerrar
-              </button>
-            }
-          </td>
+          <th scope="col" [attr.aria-sort]="ariaSort('id')">
+            <button type="button" class="ordenar" (click)="ordenar('id')">
+              Nº
+              @if (ordenarPor() === 'id') {
+                <lucide-icon [img]="sentido() === 'asc' ? iconeCrescente : iconeDecrescente" [size]="14" aria-hidden="true" />
+              }
+            </button>
+          </th>
+          <th scope="col">Título</th>
+          <th scope="col">Fila</th>
+          <th scope="col">Status</th>
+          <th scope="col">Responsável</th>
+          <th scope="col" [attr.aria-sort]="ariaSort('updated_at')">
+            <button type="button" class="ordenar" (click)="ordenar('updated_at')">
+              Atualizada em
+              @if (ordenarPor() === 'updated_at') {
+                <lucide-icon [img]="sentido() === 'asc' ? iconeCrescente : iconeDecrescente" [size]="14" aria-hidden="true" />
+              }
+            </button>
+          </th>
+          <th scope="col">Ação</th>
         </tr>
-        @if (encerrandoId() === demanda.id) {
-          <tr class="linha-encerramento">
-            <td colspan="7">
-              <app-form-encerramento
-                [demanda]="demanda"
-                (encerrada)="aoEncerrar($event)"
-                (desatualizada)="aoDesatualizar($event)"
-                (cancelada)="fecharEncerramento()"
-              />
-            </td>
-          </tr>
+      </thead>
+      <tbody>
+        @if (mostrarEsqueleto()) {
+          @for (n of linhasDoEsqueleto; track n) {
+            <tr class="linha-esqueleto">
+              <td><app-skeleton largura="2rem" /></td>
+              <td><app-skeleton largura="85%" /></td>
+              <td><app-skeleton largura="4.5rem" /></td>
+              <td><app-skeleton largura="5.5rem" /></td>
+              <td><app-skeleton largura="6rem" /></td>
+              <td><app-skeleton largura="7rem" /></td>
+              <td><app-skeleton largura="5rem" /></td>
+            </tr>
+          }
+        } @else {
+          @for (demanda of demandas(); track demanda.id) {
+            <tr>
+              <td class="num" data-label="Nº">{{ demanda.id }}</td>
+              <td class="titulo" data-label="Título">{{ demanda.title }}</td>
+              <td class="fila" data-label="Fila">{{ demanda.queue }}</td>
+              <td data-label="Status"><app-pilula-status [status]="demanda.status" /></td>
+              <td data-label="Responsável" [class.sem-valor]="!demanda.workerName">{{ demanda.workerName ?? '—' }}</td>
+              <td class="data" data-label="Atualizada em">{{ demanda.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="acao" data-label="Ação">
+                @if (demanda.status === 1) {
+                  <button
+                    type="button"
+                    app-botao
+                    variante="primario"
+                    tamanho="pequeno"
+                    [icone]="iconeReservar"
+                    [carregando]="estaReservando(demanda.id)"
+                    [disabled]="estaReservando(demanda.id)"
+                    (click)="reservar(demanda)"
+                  >
+                    {{ estaReservando(demanda.id) ? 'Reservando…' : 'Reservar' }}
+                  </button>
+                }
+                @if (podeEncerrar(demanda)) {
+                  <button
+                    type="button"
+                    app-botao
+                    variante="secundario"
+                    tamanho="pequeno"
+                    [icone]="iconeEncerrar"
+                    aria-haspopup="dialog"
+                    (click)="abrirEncerramento(demanda.id)"
+                  >
+                    Encerrar
+                  </button>
+                }
+              </td>
+            </tr>
+          }
         }
-      } @empty {
-        @if (!carregando() && !erro()) {
-          <tr>
-            <td colspan="7" class="vazio">Nenhuma demanda encontrada para este filtro.</td>
-          </tr>
-        }
-      }
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+
+    @if (semResultados()) {
+      <app-estado-vazio
+        [icone]="iconeSemResultados"
+        titulo="Nenhuma demanda encontrada"
+        descricao="Nenhuma demanda corresponde aos filtros escolhidos. Tente outra fila ou outro status."
+      />
+    }
+  </div>
 
   <nav class="paginacao" aria-label="Paginação">
-    <button type="button" (click)="irParaPagina(pagina() - 1)" [disabled]="pagina() <= 1 || carregando()">
-      Anterior
-    </button>
-    <span>Página {{ pagina() }} de {{ totalDePaginas() }}</span>
     <button
       type="button"
+      app-botao
+      variante="secundario"
+      tamanho="pequeno"
+      [icone]="iconeAnterior"
+      (click)="irParaPagina(pagina() - 1)"
+      [disabled]="pagina() <= 1 || carregando()"
+    >
+      Anterior
+    </button>
+    <span class="pagina">Página {{ pagina() }} de {{ totalDePaginas() }}</span>
+    <button
+      type="button"
+      app-botao
+      variante="secundario"
+      tamanho="pequeno"
+      [icone]="iconeProxima"
+      [iconeAoFinal]="true"
       (click)="irParaPagina(pagina() + 1)"
       [disabled]="pagina() >= totalDePaginas() || carregando()"
     >
@@ -136,3 +195,20 @@
     </button>
   </nav>
 </section>
+
+@if (demandaEmEncerramento(); as demanda) {
+  <app-modal
+    [titulo]="'Encerrar demanda ' + demanda.id"
+    [fechavel]="!encerrandoOcupado()"
+    (fechar)="fecharEncerramento()"
+  >
+    <p class="resumo-da-demanda">{{ demanda.title }} · {{ demanda.queue }}</p>
+    <app-form-encerramento
+      [demanda]="demanda"
+      (encerrada)="aoEncerrar($event)"
+      (desatualizada)="aoDesatualizar($event)"
+      (cancelada)="fecharEncerramento()"
+      (ocupado)="encerrandoOcupado.set($event)"
+    />
+  </app-modal>
+}

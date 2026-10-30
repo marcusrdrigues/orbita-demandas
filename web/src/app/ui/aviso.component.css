@@ -1,0 +1,51 @@
+:host {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-sm);
+  animation: entrar 220ms var(--ease);
+}
+
+.texto {
+  flex: 1;
+  min-width: 0;
+  padding-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+:host(.aviso-sucesso) {
+  background: var(--aviso-sucesso-bg);
+  color: var(--aviso-sucesso-fg);
+}
+
+:host(.aviso-conflito) {
+  background: var(--aviso-conflito-bg);
+  color: var(--aviso-conflito-fg);
+}
+
+:host(.aviso-erro) {
+  background: var(--aviso-erro-bg);
+  color: var(--aviso-erro-fg);
+}
+
+:host(.aviso-info) {
+  background: var(--aviso-info-bg);
+  color: var(--aviso-info-fg);
+}
+
+/* O botão de fechar herda a cor do aviso (contraste já conferido para o texto). */
+button {
+  color: inherit;
+  margin: -2px 0;
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}

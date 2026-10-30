@@ -1,8 +1,13 @@
 <header class="topo">
-  <h1>Órbita · Demandas</h1>
-  <app-seletor-usuario />
+  <div class="topo-conteudo">
+    <p class="marca">
+      <span class="marca-icone"><lucide-icon [img]="iconeMarca" [size]="20" aria-hidden="true" /></span>
+      <span class="marca-nome">Órbita</span>
+    </p>
+    <app-seletor-usuario />
+  </div>
 </header>
 
-<main>
+<main class="conteudo">
   <app-lista-demandas />
 </main>

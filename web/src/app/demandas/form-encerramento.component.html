@@ -1,14 +1,18 @@
 <form class="encerramento" [formGroup]="form" (ngSubmit)="concluir()" novalidate>
-  <fieldset>
-    <legend>Resultado da demanda {{ demanda().id }}</legend>
-    <label class="opcao">
-      <input type="radio" formControlName="outcome" value="success" />
-      Sucesso
-    </label>
-    <label class="opcao">
-      <input type="radio" formControlName="outcome" value="failure" />
-      Insucesso
-    </label>
+  <fieldset class="grupo">
+    <legend>Resultado</legend>
+    <div class="segmentado">
+      <label class="segmento segmento-sucesso">
+        <input type="radio" formControlName="outcome" value="success" autofocus />
+        <lucide-icon [img]="iconeSucesso" [size]="18" aria-hidden="true" />
+        <span>Sucesso</span>
+      </label>
+      <label class="segmento segmento-insucesso">
+        <input type="radio" formControlName="outcome" value="failure" />
+        <lucide-icon [img]="iconeInsucesso" [size]="18" aria-hidden="true" />
+        <span>Insucesso</span>
+      </label>
+    </div>
   </fieldset>
 
   @if (resultado() === 'failure') {
@@ -23,16 +27,18 @@
         [attr.aria-invalid]="mostrarErro(motivo)"
         [attr.aria-describedby]="idDoCampo('motivo-contador') + ' ' + idDoCampo('motivo-erro')"
       />
-      <span
-        class="contador"
-        [id]="idDoCampo('motivo-contador')"
-        [class.excedido]="tamanhoDoMotivo() > limiteDoMotivo"
-      >
-        {{ tamanhoDoMotivo() }}/{{ limiteDoMotivo }}
-      </span>
-      @if (mostrarErro(motivo)) {
-        <p class="campo-erro" [id]="idDoCampo('motivo-erro')">{{ mensagemDoMotivo() }}</p>
-      }
+      <div class="rodape-do-campo">
+        @if (mostrarErro(motivo)) {
+          <p class="campo-erro" [id]="idDoCampo('motivo-erro')">{{ mensagemDoMotivo() }}</p>
+        }
+        <span
+          class="contador"
+          [id]="idDoCampo('motivo-contador')"
+          [class.excedido]="tamanhoDoMotivo() > limiteDoMotivo"
+        >
+          {{ tamanhoDoMotivo() }}/{{ limiteDoMotivo }}
+        </span>
+      </div>
     </div>
   }
 
@@ -45,16 +51,18 @@
       [attr.aria-invalid]="observacao.invalid"
       [attr.aria-describedby]="idDoCampo('observacao-contador')"
     ></textarea>
-    <span
-      class="contador"
-      [id]="idDoCampo('observacao-contador')"
-      [class.excedido]="tamanhoDaObservacao() > limiteDaObservacao"
-    >
-      {{ tamanhoDaObservacao() }}/{{ limiteDaObservacao }}
-    </span>
-    @if (observacao.hasError('maxlength')) {
-      <p class="campo-erro">A observação pode ter no máximo {{ limiteDaObservacao }} caracteres.</p>
-    }
+    <div class="rodape-do-campo">
+      @if (observacao.hasError('maxlength')) {
+        <p class="campo-erro">A observação pode ter no máximo {{ limiteDaObservacao }} caracteres.</p>
+      }
+      <span
+        class="contador"
+        [id]="idDoCampo('observacao-contador')"
+        [class.excedido]="tamanhoDaObservacao() > limiteDaObservacao"
+      >
+        {{ tamanhoDaObservacao() }}/{{ limiteDaObservacao }}
+      </span>
+    </div>
   </div>
 
   @if (erro(); as mensagem) {
@@ -62,9 +70,18 @@
   }
 
   <div class="acoes">
-    <button type="submit" [disabled]="!valido() || enviando()" [attr.aria-busy]="enviando()">
+    <button type="button" app-botao variante="secundario" (click)="cancelada.emit()" [disabled]="enviando()">
+      Cancelar
+    </button>
+    <button
+      type="submit"
+      app-botao
+      variante="primario"
+      [icone]="iconeConcluir"
+      [carregando]="enviando()"
+      [disabled]="!valido() || enviando()"
+    >
       {{ enviando() ? 'Concluindo…' : 'Concluir' }}
     </button>
-    <button type="button" (click)="cancelada.emit()" [disabled]="enviando()">Cancelar</button>
   </div>
 </form>

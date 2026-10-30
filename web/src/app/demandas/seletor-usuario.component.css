@@ -1,0 +1,50 @@
+/* O seletor pode encolher (com reticências) para a barra nunca estourar em telas estreitas. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.seletor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.rotulo {
+  white-space: nowrap;
+}
+
+select {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+select:hover {
+  background: var(--surface-2);
+}
+
+/* Em telas estreitas o texto "Entrando como" sai da vista (continua para leitor de tela). */
+@media (max-width: 520px) {
+  .rotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}

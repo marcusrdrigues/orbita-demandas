@@ -1,5 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   FormControl,
@@ -9,6 +19,7 @@ import {
   type AbstractControl,
   type ValidationErrors,
 } from '@angular/forms';
+import { Check, CircleCheck, CircleX, LucideAngularModule } from 'lucide-angular';
 import { map } from 'rxjs';
 import {
   DemandasService,
@@ -17,6 +28,7 @@ import {
   type Resultado,
 } from '../core/demandas.service';
 import { mensagemDaApi } from '../core/erros-http';
+import { BotaoComponent } from '../ui/botao.component';
 
 const LIMITE_DO_MOTIVO = 40;
 const LIMITE_DA_OBSERVACAO = 500;
@@ -30,7 +42,7 @@ const VALIDADORES_DO_MOTIVO = [Validators.required, naoSoEspacos, Validators.max
 
 @Component({
   selector: 'app-form-encerramento',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LucideAngularModule, BotaoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './form-encerramento.component.html',
   styleUrl: './form-encerramento.component.css',
@@ -46,6 +58,8 @@ export class FormEncerramentoComponent {
   /** A API recusou porque o estado mudou (404 ou 409); leva a mensagem para a lista recarregar. */
   readonly desatualizada = output<string>();
   readonly cancelada = output<void>();
+  /** Diz ao pai quando há um envio em andamento (o modal não deve fechar nesse intervalo). */
+  readonly ocupado = output<boolean>();
 
   protected readonly limiteDoMotivo = LIMITE_DO_MOTIVO;
   protected readonly limiteDaObservacao = LIMITE_DA_OBSERVACAO;
@@ -74,10 +88,16 @@ export class FormEncerramentoComponent {
   protected readonly tamanhoDoMotivo = computed(() => this.textoDoMotivo().length);
   protected readonly tamanhoDaObservacao = computed(() => this.textoDaObservacao().length);
 
+  protected readonly iconeSucesso = CircleCheck;
+  protected readonly iconeInsucesso = CircleX;
+  protected readonly iconeConcluir = Check;
+
   protected readonly enviando = signal(false);
   protected readonly erro = signal<string | null>(null);
 
   constructor() {
+    effect(() => this.ocupado.emit(this.enviando()));
+
     this.form.controls.outcome.valueChanges.pipe(takeUntilDestroyed()).subscribe((resultado) => {
       this.ajustarMotivo(resultado);
     });

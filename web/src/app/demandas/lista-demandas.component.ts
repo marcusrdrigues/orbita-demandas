@@ -2,6 +2,16 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import {
+  ArrowDown,
+  ArrowUp,
+  CheckCheck,
+  ChevronLeft,
+  ChevronRight,
+  Hand,
+  LucideAngularModule,
+  SearchX,
+} from 'lucide-angular';
 import { EMPTY, Subject, catchError, switchMap, tap } from 'rxjs';
 import {
   DemandasService,
@@ -15,6 +25,12 @@ import {
 import { mensagemDaApi } from '../core/erros-http';
 import { FILAS } from '../core/filas';
 import { UsuarioAtual } from '../core/usuario-atual';
+import { AvisoComponent, type TipoDeAviso } from '../ui/aviso.component';
+import { BotaoComponent } from '../ui/botao.component';
+import { EstadoVazioComponent } from '../ui/estado-vazio.component';
+import { ModalComponent } from '../ui/modal.component';
+import { PilulaStatusComponent } from '../ui/pilula-status.component';
+import { SkeletonComponent } from '../ui/skeleton.component';
 import { FormEncerramentoComponent } from './form-encerramento.component';
 
 const TAMANHO_DA_PAGINA = 20;
@@ -27,7 +43,18 @@ const ROTULOS_DE_STATUS: Record<StatusDemanda, string> = {
 
 @Component({
   selector: 'app-lista-demandas',
-  imports: [ReactiveFormsModule, DatePipe, FormEncerramentoComponent],
+  imports: [
+    ReactiveFormsModule,
+    DatePipe,
+    LucideAngularModule,
+    AvisoComponent,
+    BotaoComponent,
+    EstadoVazioComponent,
+    ModalComponent,
+    PilulaStatusComponent,
+    SkeletonComponent,
+    FormEncerramentoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './lista-demandas.component.html',
   styleUrl: './lista-demandas.component.css',
@@ -60,11 +87,35 @@ export class ListaDemandasComponent {
 
   /** Ids com reserva em andamento: o botão dessas linhas fica desabilitado (evita duplo clique). */
   protected readonly reservando = signal<ReadonlySet<number>>(new Set());
-  protected readonly aviso = signal<{ texto: string; conflito: boolean } | null>(null);
+  protected readonly aviso = signal<{ id: number; tipo: TipoDeAviso; texto: string } | null>(null);
+  private proximoAviso = 0;
 
   /** Demanda com o formulário de encerramento aberto (só uma por vez). */
   protected readonly encerrandoId = signal<number | null>(null);
+  /** O formulário de encerramento está enviando: o modal não pode ser fechado nesse intervalo. */
+  protected readonly encerrandoOcupado = signal(false);
+  protected readonly demandaEmEncerramento = computed(() => {
+    const id = this.encerrandoId();
+    return id === null ? null : (this.demandas().find((demanda) => demanda.id === id) ?? null);
+  });
   private readonly ehSupervisor = computed(() => this.usuarioAtual.usuario().escopos.includes('demands:supervise'));
+
+  /** Primeira carga: sem linhas ainda, mostra o esqueleto. Nas recargas, as linhas ficam esmaecidas. */
+  protected readonly mostrarEsqueleto = computed(() => this.carregando() && this.demandas().length === 0);
+  protected readonly recarregando = computed(() => this.carregando() && this.demandas().length > 0);
+  protected readonly semResultados = computed(
+    () => !this.carregando() && this.erro() === null && this.demandas().length === 0,
+  );
+  protected readonly totalFormatado = computed(() => this.total().toLocaleString('pt-BR'));
+  protected readonly linhasDoEsqueleto = [1, 2, 3, 4, 5, 6, 7, 8];
+
+  protected readonly iconeReservar = Hand;
+  protected readonly iconeEncerrar = CheckCheck;
+  protected readonly iconeAnterior = ChevronLeft;
+  protected readonly iconeProxima = ChevronRight;
+  protected readonly iconeSemResultados = SearchX;
+  protected readonly iconeCrescente = ArrowUp;
+  protected readonly iconeDecrescente = ArrowDown;
 
   protected readonly totalDePaginas = computed(() => Math.max(1, Math.ceil(this.total() / TAMANHO_DA_PAGINA)));
 
@@ -159,13 +210,21 @@ export class ListaDemandasComponent {
   protected aoEncerrar(encerrada: Demanda): void {
     this.substituirLinha(encerrada);
     this.encerrandoId.set(null);
-    this.aviso.set({ texto: `Demanda ${encerrada.id} encerrada.`, conflito: false });
+    this.mostrarAviso('sucesso', `Demanda ${encerrada.id} encerrada.`);
   }
 
   /** A API recusou porque o estado mudou (404/409): recarrega a lista e mostra o motivo. */
   protected aoDesatualizar(mensagem: string): void {
     this.consultas.next(this.montarConsulta());
-    this.aviso.set({ texto: mensagem, conflito: true });
+    this.mostrarAviso('conflito', mensagem);
+  }
+
+  protected descartarAviso(): void {
+    this.aviso.set(null);
+  }
+
+  private mostrarAviso(tipo: TipoDeAviso, texto: string): void {
+    this.aviso.set({ id: ++this.proximoAviso, tipo, texto });
   }
 
   protected estaReservando(demandaId: number): boolean {
@@ -186,7 +245,7 @@ export class ListaDemandasComponent {
       .subscribe({
         next: (reservada) => {
           this.substituirLinha(reservada);
-          this.aviso.set({ texto: `Demanda ${reservada.id} reservada para você.`, conflito: false });
+          this.mostrarAviso('sucesso', `Demanda ${reservada.id} reservada para você.`);
           this.marcarReservando(demanda.id, false);
         },
         error: (falha: unknown) => {
@@ -194,9 +253,9 @@ export class ListaDemandasComponent {
           const conflito = lerConflitoDeReserva(falha);
           if (conflito) {
             this.substituirLinha(conflito.demanda);
-            this.aviso.set({ texto: conflito.message, conflito: true });
+            this.mostrarAviso('conflito', conflito.message);
           } else {
-            this.aviso.set({ texto: mensagemDaApi(falha, 'Não foi possível reservar a demanda. Tente novamente.'), conflito: false });
+            this.mostrarAviso('erro', mensagemDaApi(falha, 'Não foi possível reservar a demanda. Tente novamente.'));
           }
           this.marcarReservando(demanda.id, false);
         },

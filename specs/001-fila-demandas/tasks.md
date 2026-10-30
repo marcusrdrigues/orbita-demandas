@@ -145,12 +145,12 @@ description: "Tarefas da Fila de Demandas"
 
 ### Tests for User Story 4
 
-- [ ] T042 [US4] Criar `api/tests/integracao/demand-trace.test.ts`: reserva efetiva grava 1 linha (`demand_id`, `user_id`, `action='reservada'`, `note` nula, `created_at` preenchido); encerramento grava 1 linha (`action='encerrada'`, `note` igual à informada); reserva repetida do dono, 404, 409, 403 e 400 **não** gravam linha; **atomicidade**: construir o app com um `RepositorioTrace` que lança erro e provar que, na reserva e no encerramento, a demanda continua como estava (status, `worker_id`, `outcome`) e a resposta é 500 genérico
-- [ ] T043 [P] [US4] Criar `api/tests/unidade/trace-imutavel.test.ts`: falha se algum arquivo em `api/src` contiver `UPDATE demand_trace` ou `DELETE FROM demand_trace` (garante a imutabilidade do histórico)
+- [X] T042 [US4] Criar `api/tests/integracao/demand-trace.test.ts`: reserva efetiva grava 1 linha (`demand_id`, `user_id`, `action='reservada'`, `note` nula, `created_at` preenchido); encerramento grava 1 linha (`action='encerrada'`, `note` igual à informada); reserva repetida do dono, 404, 409, 403 e 400 **não** gravam linha; **atomicidade**: construir o app com um `RepositorioTrace` que lança erro e provar que, na reserva e no encerramento, a demanda continua como estava (status, `worker_id`, `outcome`) e a resposta é 500 genérico
+- [X] T043 [P] [US4] Criar `api/tests/unidade/trace-imutavel.test.ts`: falha se algum arquivo em `api/src` contiver `UPDATE demand_trace` ou `DELETE FROM demand_trace` (garante a imutabilidade do histórico)
 
 ### Implementation for User Story 4
 
-- [ ] T044 [US4] Rodar `api/tests/integracao/demand-trace.test.ts` (T042) e corrigir as falhas encontradas em `api/src/application/casos-de-uso/` e `api/src/infra/mysql/` (trace fora da transação, trace em caminho de recusa ou em reserva repetida); registrar no resumo da entrega o resultado do teste
+- [X] T044 [US4] Rodar `api/tests/integracao/demand-trace.test.ts` (T042) e corrigir as falhas encontradas em `api/src/application/casos-de-uso/` e `api/src/infra/mysql/` (trace fora da transação, trace em caminho de recusa ou em reserva repetida); registrar no resumo da entrega o resultado do teste
 
 **Checkpoint**: as quatro histórias completas e testadas.
 
@@ -158,12 +158,12 @@ description: "Tarefas da Fila de Demandas"
 
 ## Phase 7: Polish & Cross-Cutting
 
-- [ ] T045 Rodar `EXPLAIN` das consultas da listagem (com e sem filtro, ordenando por `updated_at`) no banco seedado, registrar o resultado em `specs/001-fila-demandas/research.md` e conferir que uma página responde bem abaixo de 2 s (SC-002); **não** criar índice (esquema fixo)
-- [ ] T046 Revisão de segurança do código: nenhuma consulta com interpolação ou template string com entrada (`rg` em `api/src/infra/mysql`); ordenação só pelo mapa fixo; nenhuma senha ou segredo no repositório; resposta de erro e log sem stack, nome de classe ou corpo da requisição
-- [ ] T047 [P] Criar `README.md` na raiz em pt-BR: pré-requisitos, `.env` a partir do `.env.example`, subir o banco, rodar API e web, rodar os testes, usuários simulados e o aviso de que a autenticação por cabeçalho é só para esta versão mínima
-- [ ] T048 Rodar `npm test` em `api/` e colar no resumo a saída real (contagem de testes e resultado); se algo falhar, mostrar a falha
-- [ ] T049 Rodar `npx ng build` em `web/` (build e checagem de tipos, exigidos pela constituição, princípio VI) e colar no resumo a saída real; se falhar, corrigir os erros antes do roteiro manual
-- [ ] T050 Executar o roteiro manual do `quickstart.md` (seções 3 e 5) com a API e o front no ar e registrar o que foi conferido; dizer explicitamente o que **não** foi conferido
+- [X] T045 Rodar `EXPLAIN` das consultas da listagem (com e sem filtro, ordenando por `updated_at`) no banco seedado, registrar o resultado em `specs/001-fila-demandas/research.md` e conferir que uma página responde bem abaixo de 2 s (SC-002); **não** criar índice (esquema fixo)
+- [X] T046 Revisão de segurança do código: nenhuma consulta com interpolação ou template string com entrada (`rg` em `api/src/infra/mysql`); ordenação só pelo mapa fixo; nenhuma senha ou segredo no repositório; resposta de erro e log sem stack, nome de classe ou corpo da requisição
+- [X] T047 [P] Criar `README.md` na raiz em pt-BR: pré-requisitos, `.env` a partir do `.env.example`, subir o banco, rodar API e web, rodar os testes, usuários simulados e o aviso de que a autenticação por cabeçalho é só para esta versão mínima
+- [X] T048 Rodar `npm test` em `api/` e colar no resumo a saída real (contagem de testes e resultado); se algo falhar, mostrar a falha
+- [X] T049 Rodar `npx ng build` em `web/` (build e checagem de tipos, exigidos pela constituição, princípio VI) e colar no resumo a saída real; se falhar, corrigir os erros antes do roteiro manual
+- [X] T050 Executar o roteiro manual do `quickstart.md` (seções 3 e 5) com a API e o front no ar e registrar o que foi conferido; dizer explicitamente o que **não** foi conferido
 
 ---
 

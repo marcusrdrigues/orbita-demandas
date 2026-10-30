@@ -34,7 +34,9 @@ cd web && npm install && npm start        # front, com proxy para a API
    ficou, e a linha é atualizada sem recarregar a página.
 5. Encerrar: escolher "insucesso" sem motivo → botão desabilitado; trocar para "sucesso" →
    o motivo é limpo e o botão habilita.
-6. Como outro operador, tentar encerrar demanda alheia → recusado (403); como supervisor → aceito.
+6. Como outro operador, a demanda alheia não mostra o botão **Encerrar** (a tela já esconde a
+   ação); a recusa (403) é da API, conferida na seção 5. Como supervisor, o botão aparece e o
+   encerramento é aceito.
 
 ## 4. Testes automatizados
 

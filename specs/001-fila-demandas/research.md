@@ -81,6 +81,34 @@ Versões conferidas em 2026-10-30 (`npm view` e documentação oficial via Conte
   usar a opção de não criar arquivos de teste). A constituição v1.1.0 torna esses testes opcionais; o gate do front é `ng build`.
 - **409 de reserva**: devolve `demanda`, `message` e `holder {id, name}` (ver contrato).
 
+## Resultado do EXPLAIN da listagem (T045)
+
+Medido em 2026-10-30 no banco de desenvolvimento seedado (MySQL 8.4.13, 5.000 demandas, só o
+índice `ix_queue_status (queue, status)` do esquema fixo). As consultas são as geradas por
+`RepositorioDemandasMysql.listar`, com valores literais no lugar dos `?`. `LIMIT 20`.
+
+| # | Consulta | Plano | Linhas lidas | Observação |
+|---|---|---|---|---|
+| A | `COUNT(*)` sem filtro | `index` em `ix_queue_status` | ~5.051 | `Using index` (não toca a tabela) |
+| B | `COUNT(*)` com `queue='vendas' AND status=1` | `ref` em `ix_queue_status` | 750 | `Using index` |
+| C | página 1, sem filtro, `ORDER BY d.id ASC` | `index` na `PRIMARY` | 20 | para no 20º; `LEFT JOIN app_user` por `eq_ref` |
+| D | página 1, `queue` + `status`, `ORDER BY d.id ASC` | `ref` em `ix_queue_status` | 750 | já sai ordenado por id dentro do índice, sem `filesort` |
+| E | página 250 (a última), sem filtro, `ORDER BY d.updated_at DESC, d.id DESC` | `ALL` (varredura) | 5.051 | **`Using filesort`** |
+| F | página 1, `queue` + `status`, `ORDER BY d.updated_at ASC, d.id ASC` | `ref` em `ix_queue_status` | 750 | **`Using filesort`**, só sobre as 750 do filtro |
+
+`EXPLAIN ANALYZE` dos dois casos com `filesort`:
+
+- **E (pior caso):** 15,3 ms no MySQL (5.000 linhas lidas e ordenadas; `Sort ... limit input to
+  5000 row(s) per chunk`).
+- **F:** 0,73 ms (750 linhas do filtro; ordena só até 20 por chunk).
+
+**Conclusão.** Ordenar por `id` é barato em qualquer filtro (usa a chave primária ou o índice).
+Ordenar por `updated_at` faz `filesort`, mas com 5 mil linhas custa ~15 ms no pior caso, bem
+abaixo dos 2 s de SC-002. **Nenhum índice foi criado**, porque o esquema é fixo (data-model.md).
+Se a tabela crescesse para centenas de milhares de linhas, o primeiro passo seria um índice
+`(queue, status, updated_at, id)` e, para páginas profundas, paginação por cursor em vez de
+`OFFSET`. Isso só vale medir fora desta versão mínima.
+
 ## Riscos e pendências
 
 - Autenticação por cabeçalhos é falsificável: aceito e documentado na spec (versão mínima).

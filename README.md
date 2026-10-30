@@ -43,7 +43,7 @@ cd web
 npm install
 npm run dev
 
-# 5. Testes da API (precisam do banco no ar e do .env)
+# 5. Testes da API (terminal 3, a partir da raiz; precisam do banco no ar e do .env)
 cd api
 npm test
 ```

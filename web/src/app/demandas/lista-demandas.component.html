@@ -89,8 +89,29 @@
                 {{ estaReservando(demanda.id) ? 'Reservando…' : 'Reservar' }}
               </button>
             }
+            @if (podeEncerrar(demanda)) {
+              <button
+                type="button"
+                (click)="abrirEncerramento(demanda.id)"
+                [attr.aria-expanded]="encerrandoId() === demanda.id"
+              >
+                Encerrar
+              </button>
+            }
           </td>
         </tr>
+        @if (encerrandoId() === demanda.id) {
+          <tr class="linha-encerramento">
+            <td colspan="7">
+              <app-form-encerramento
+                [demanda]="demanda"
+                (encerrada)="aoEncerrar($event)"
+                (desatualizada)="aoDesatualizar($event)"
+                (cancelada)="fecharEncerramento()"
+              />
+            </td>
+          </tr>
+        }
       } @empty {
         @if (!carregando() && !erro()) {
           <tr>

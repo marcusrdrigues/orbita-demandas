@@ -1,0 +1,70 @@
+<form class="encerramento" [formGroup]="form" (ngSubmit)="concluir()" novalidate>
+  <fieldset>
+    <legend>Resultado da demanda {{ demanda().id }}</legend>
+    <label class="opcao">
+      <input type="radio" formControlName="outcome" value="success" />
+      Sucesso
+    </label>
+    <label class="opcao">
+      <input type="radio" formControlName="outcome" value="failure" />
+      Insucesso
+    </label>
+  </fieldset>
+
+  @if (resultado() === 'failure') {
+    <div class="campo">
+      <label [for]="idDoCampo('motivo')">Motivo do insucesso (obrigatório)</label>
+      <input
+        type="text"
+        autocomplete="off"
+        formControlName="failureReason"
+        [id]="idDoCampo('motivo')"
+        aria-required="true"
+        [attr.aria-invalid]="mostrarErro(motivo)"
+        [attr.aria-describedby]="idDoCampo('motivo-contador') + ' ' + idDoCampo('motivo-erro')"
+      />
+      <span
+        class="contador"
+        [id]="idDoCampo('motivo-contador')"
+        [class.excedido]="tamanhoDoMotivo() > limiteDoMotivo"
+      >
+        {{ tamanhoDoMotivo() }}/{{ limiteDoMotivo }}
+      </span>
+      @if (mostrarErro(motivo)) {
+        <p class="campo-erro" [id]="idDoCampo('motivo-erro')">{{ mensagemDoMotivo() }}</p>
+      }
+    </div>
+  }
+
+  <div class="campo">
+    <label [for]="idDoCampo('observacao')">Observação (opcional)</label>
+    <textarea
+      rows="3"
+      formControlName="note"
+      [id]="idDoCampo('observacao')"
+      [attr.aria-invalid]="observacao.invalid"
+      [attr.aria-describedby]="idDoCampo('observacao-contador')"
+    ></textarea>
+    <span
+      class="contador"
+      [id]="idDoCampo('observacao-contador')"
+      [class.excedido]="tamanhoDaObservacao() > limiteDaObservacao"
+    >
+      {{ tamanhoDaObservacao() }}/{{ limiteDaObservacao }}
+    </span>
+    @if (observacao.hasError('maxlength')) {
+      <p class="campo-erro">A observação pode ter no máximo {{ limiteDaObservacao }} caracteres.</p>
+    }
+  </div>
+
+  @if (erro(); as mensagem) {
+    <p class="campo-erro" role="alert">{{ mensagem }}</p>
+  }
+
+  <div class="acoes">
+    <button type="submit" [disabled]="!valido() || enviando()" [attr.aria-busy]="enviando()">
+      {{ enviando() ? 'Concluindo…' : 'Concluir' }}
+    </button>
+    <button type="button" (click)="cancelada.emit()" [disabled]="enviando()">Cancelar</button>
+  </div>
+</form>

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 export type StatusDemanda = 1 | 2 | 3;
+export type Resultado = 'success' | 'failure';
 export type CampoOrdenacao = 'id' | 'updated_at';
 export type SentidoOrdenacao = 'asc' | 'desc';
 
@@ -13,7 +14,7 @@ export interface Demanda {
   status: StatusDemanda;
   workerId: number | null;
   workerName: string | null;
-  outcome: 'success' | 'failure' | null;
+  outcome: Resultado | null;
   failureReason: string | null;
   note: string | null;
   updatedAt: string;
@@ -24,6 +25,13 @@ export interface PaginaDeDemandas {
   total: number;
   page: number;
   pageSize: number;
+}
+
+/** Corpo do encerramento: o motivo só vai no insucesso; a observação só se preenchida. */
+export interface CorpoDeEncerramento {
+  outcome: Resultado;
+  failureReason?: string;
+  note?: string;
 }
 
 export interface ConsultaDeDemandas {
@@ -77,5 +85,9 @@ export class DemandasService {
 
   reservar(demandaId: number): Observable<Demanda> {
     return this.http.post<Demanda>(`/demands/${demandaId}/reserve`, null);
+  }
+
+  encerrar(demandaId: number, corpo: CorpoDeEncerramento): Observable<Demanda> {
+    return this.http.post<Demanda>(`/demands/${demandaId}/finish`, corpo);
   }
 }

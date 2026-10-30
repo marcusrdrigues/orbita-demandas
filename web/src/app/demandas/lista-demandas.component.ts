@@ -1,5 +1,4 @@
 import { DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -13,8 +12,10 @@ import {
   type SentidoOrdenacao,
   type StatusDemanda,
 } from '../core/demandas.service';
+import { mensagemDaApi } from '../core/erros-http';
 import { FILAS } from '../core/filas';
 import { UsuarioAtual } from '../core/usuario-atual';
+import { FormEncerramentoComponent } from './form-encerramento.component';
 
 const TAMANHO_DA_PAGINA = 20;
 
@@ -26,7 +27,7 @@ const ROTULOS_DE_STATUS: Record<StatusDemanda, string> = {
 
 @Component({
   selector: 'app-lista-demandas',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, FormEncerramentoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './lista-demandas.component.html',
   styleUrl: './lista-demandas.component.css',
@@ -61,6 +62,10 @@ export class ListaDemandasComponent {
   protected readonly reservando = signal<ReadonlySet<number>>(new Set());
   protected readonly aviso = signal<{ texto: string; conflito: boolean } | null>(null);
 
+  /** Demanda com o formulário de encerramento aberto (só uma por vez). */
+  protected readonly encerrandoId = signal<number | null>(null);
+  private readonly ehSupervisor = computed(() => this.usuarioAtual.usuario().escopos.includes('demands:supervise'));
+
   protected readonly totalDePaginas = computed(() => Math.max(1, Math.ceil(this.total() / TAMANHO_DA_PAGINA)));
 
   private readonly consultas = new Subject<ConsultaDeDemandas>();
@@ -73,11 +78,12 @@ export class ListaDemandasComponent {
           this.carregando.set(true);
           this.erro.set(null);
           this.aviso.set(null);
+          this.encerrandoId.set(null);
         }),
         switchMap((consulta) =>
           this.demandasService.listar(consulta).pipe(
             catchError((falha: unknown) => {
-              this.erro.set(this.mensagemDeErro(falha));
+              this.erro.set(mensagemDaApi(falha, 'Não foi possível carregar as demandas. Tente novamente.'));
               this.carregando.set(false);
               return EMPTY;
             }),
@@ -94,19 +100,23 @@ export class ListaDemandasComponent {
     // Refaz a consulta quando muda filtro, ordenação, página ou o usuário simulado.
     effect(() => {
       this.usuarioAtual.usuario();
-      const { queue, status } = this.valoresDosFiltros();
-      this.consultas.next({
-        page: this.pagina(),
-        pageSize: TAMANHO_DA_PAGINA,
-        queue: queue || undefined,
-        status: status === '' || status === undefined ? undefined : status,
-        sort: this.ordenarPor(),
-        order: this.sentido(),
-      });
+      this.consultas.next(this.montarConsulta());
     });
 
     // Mudar o filtro volta para a primeira página.
     this.filtros.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.pagina.set(1));
+  }
+
+  private montarConsulta(): ConsultaDeDemandas {
+    const { queue, status } = this.valoresDosFiltros();
+    return {
+      page: this.pagina(),
+      pageSize: TAMANHO_DA_PAGINA,
+      queue: queue || undefined,
+      status: status === '' || status === undefined ? undefined : status,
+      sort: this.ordenarPor(),
+      order: this.sentido(),
+    };
   }
 
   protected rotuloDoStatus(status: StatusDemanda): string {
@@ -130,6 +140,32 @@ export class ListaDemandasComponent {
 
   protected irParaPagina(numero: number): void {
     this.pagina.set(Math.min(Math.max(1, numero), this.totalDePaginas()));
+  }
+
+  /** Reservada, e o usuário é o dono ou tem supervisão (a API confere de novo: isto é só experiência de uso). */
+  protected podeEncerrar(demanda: Demanda): boolean {
+    return demanda.status === 2 && (demanda.workerId === this.usuarioAtual.usuario().id || this.ehSupervisor());
+  }
+
+  protected abrirEncerramento(demandaId: number): void {
+    this.aviso.set(null);
+    this.encerrandoId.set(demandaId);
+  }
+
+  protected fecharEncerramento(): void {
+    this.encerrandoId.set(null);
+  }
+
+  protected aoEncerrar(encerrada: Demanda): void {
+    this.substituirLinha(encerrada);
+    this.encerrandoId.set(null);
+    this.aviso.set({ texto: `Demanda ${encerrada.id} encerrada.`, conflito: false });
+  }
+
+  /** A API recusou porque o estado mudou (404/409): recarrega a lista e mostra o motivo. */
+  protected aoDesatualizar(mensagem: string): void {
+    this.consultas.next(this.montarConsulta());
+    this.aviso.set({ texto: mensagem, conflito: true });
   }
 
   protected estaReservando(demandaId: number): boolean {
@@ -160,7 +196,7 @@ export class ListaDemandasComponent {
             this.substituirLinha(conflito.demanda);
             this.aviso.set({ texto: conflito.message, conflito: true });
           } else {
-            this.aviso.set({ texto: this.mensagemDeErro(falha), conflito: false });
+            this.aviso.set({ texto: mensagemDaApi(falha, 'Não foi possível reservar a demanda. Tente novamente.'), conflito: false });
           }
           this.marcarReservando(demanda.id, false);
         },
@@ -181,18 +217,5 @@ export class ListaDemandasComponent {
       }
       return proximo;
     });
-  }
-
-  private mensagemDeErro(falha: unknown): string {
-    if (falha instanceof HttpErrorResponse) {
-      const mensagem = (falha.error as { message?: unknown } | null)?.message;
-      if (typeof mensagem === 'string' && mensagem !== '') {
-        return mensagem;
-      }
-      if (falha.status === 0) {
-        return 'Não foi possível falar com o servidor. Confira se a API está no ar.';
-      }
-    }
-    return 'Não foi possível carregar as demandas. Tente novamente.';
   }
 }

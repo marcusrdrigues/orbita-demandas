@@ -1,0 +1,62 @@
+.encerramento {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 32rem;
+  padding: 0.75rem 0;
+}
+
+fieldset {
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  margin-bottom: 0.25rem;
+  padding: 0;
+  font-weight: 600;
+}
+
+.opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.campo input,
+.campo textarea {
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+}
+
+.contador {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  color: #5b6570;
+}
+
+.contador.excedido {
+  color: #a1281c;
+  font-weight: 600;
+}
+
+.campo-erro {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #a1281c;
+}
+
+.acoes {
+  display: flex;
+  gap: 0.5rem;
+}

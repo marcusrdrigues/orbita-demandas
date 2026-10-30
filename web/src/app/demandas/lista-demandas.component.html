@@ -35,6 +35,12 @@
     <p class="erro" role="alert">{{ mensagem }}</p>
   }
 
+  @if (aviso(); as mensagem) {
+    <p [class]="mensagem.conflito ? 'aviso aviso-conflito' : 'aviso'" [attr.role]="mensagem.conflito ? 'alert' : 'status'">
+      {{ mensagem.texto }}
+    </p>
+  }
+
   <table>
     <thead>
       <tr>
@@ -58,6 +64,7 @@
             }
           </button>
         </th>
+        <th scope="col">Ação</th>
       </tr>
     </thead>
     <tbody>
@@ -71,11 +78,23 @@
           </td>
           <td>{{ demanda.workerName ?? '—' }}</td>
           <td>{{ demanda.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+            @if (demanda.status === 1) {
+              <button
+                type="button"
+                (click)="reservar(demanda)"
+                [disabled]="estaReservando(demanda.id)"
+                [attr.aria-busy]="estaReservando(demanda.id)"
+              >
+                {{ estaReservando(demanda.id) ? 'Reservando…' : 'Reservar' }}
+              </button>
+            }
+          </td>
         </tr>
       } @empty {
         @if (!carregando() && !erro()) {
           <tr>
-            <td colspan="6" class="vazio">Nenhuma demanda encontrada para este filtro.</td>
+            <td colspan="7" class="vazio">Nenhuma demanda encontrada para este filtro.</td>
           </tr>
         }
       }

@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
@@ -35,6 +35,26 @@ export interface ConsultaDeDemandas {
   order: SentidoOrdenacao;
 }
 
+/** Corpo do 409 de reserva: a mensagem, quem ficou (quando reservada) e a demanda atual. */
+export interface ConflitoDeReserva {
+  code: string;
+  message: string;
+  holder?: { id: number; name: string };
+  demanda: Demanda;
+}
+
+/** Devolve o corpo do 409 de reserva, ou null se o erro for de outro tipo. */
+export function lerConflitoDeReserva(erro: unknown): ConflitoDeReserva | null {
+  if (!(erro instanceof HttpErrorResponse) || erro.status !== 409) {
+    return null;
+  }
+  const corpo: unknown = erro.error;
+  if (typeof corpo === 'object' && corpo !== null && 'demanda' in corpo && 'message' in corpo) {
+    return corpo as ConflitoDeReserva;
+  }
+  return null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DemandasService {
   private readonly http = inject(HttpClient);
@@ -53,5 +73,9 @@ export class DemandasService {
       params = params.set('status', consulta.status);
     }
     return this.http.get<PaginaDeDemandas>('/demands', { params });
+  }
+
+  reservar(demandaId: number): Observable<Demanda> {
+    return this.http.post<Demanda>(`/demands/${demandaId}/reserve`, null);
   }
 }

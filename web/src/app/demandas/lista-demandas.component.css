@@ -80,3 +80,18 @@ td {
   gap: 1rem;
   margin-top: 1rem;
 }
+
+.aviso {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #2e7d4f;
+  border-radius: 4px;
+  background: #e6f4ea;
+  color: #1b4d2f;
+}
+
+.aviso-conflito {
+  border-color: #b7791f;
+  background: #fdf0cf;
+  color: #6b4410;
+}

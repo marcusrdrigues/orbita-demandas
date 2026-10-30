@@ -1,11 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { EMPTY, Subject, catchError, switchMap, tap } from 'rxjs';
 import {
   DemandasService,
+  lerConflitoDeReserva,
   type CampoOrdenacao,
   type ConsultaDeDemandas,
   type Demanda,
@@ -33,6 +34,7 @@ const ROTULOS_DE_STATUS: Record<StatusDemanda, string> = {
 export class ListaDemandasComponent {
   private readonly demandasService = inject(DemandasService);
   private readonly usuarioAtual = inject(UsuarioAtual);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly filas = FILAS;
   protected readonly statusDisponiveis: readonly StatusDemanda[] = [1, 2, 3];
@@ -55,6 +57,10 @@ export class ListaDemandasComponent {
   protected readonly carregando = signal(false);
   protected readonly erro = signal<string | null>(null);
 
+  /** Ids com reserva em andamento: o botão dessas linhas fica desabilitado (evita duplo clique). */
+  protected readonly reservando = signal<ReadonlySet<number>>(new Set());
+  protected readonly aviso = signal<{ texto: string; conflito: boolean } | null>(null);
+
   protected readonly totalDePaginas = computed(() => Math.max(1, Math.ceil(this.total() / TAMANHO_DA_PAGINA)));
 
   private readonly consultas = new Subject<ConsultaDeDemandas>();
@@ -66,6 +72,7 @@ export class ListaDemandasComponent {
         tap(() => {
           this.carregando.set(true);
           this.erro.set(null);
+          this.aviso.set(null);
         }),
         switchMap((consulta) =>
           this.demandasService.listar(consulta).pipe(
@@ -123,6 +130,57 @@ export class ListaDemandasComponent {
 
   protected irParaPagina(numero: number): void {
     this.pagina.set(Math.min(Math.max(1, numero), this.totalDePaginas()));
+  }
+
+  protected estaReservando(demandaId: number): boolean {
+    return this.reservando().has(demandaId);
+  }
+
+  protected reservar(demanda: Demanda): void {
+    // Barreira também no código: o `disabled` do botão já evita, mas não custa garantir.
+    if (this.estaReservando(demanda.id)) {
+      return;
+    }
+    this.marcarReservando(demanda.id, true);
+    this.aviso.set(null);
+
+    this.demandasService
+      .reservar(demanda.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (reservada) => {
+          this.substituirLinha(reservada);
+          this.aviso.set({ texto: `Demanda ${reservada.id} reservada para você.`, conflito: false });
+          this.marcarReservando(demanda.id, false);
+        },
+        error: (falha: unknown) => {
+          // 409: atualiza só esta linha com a demanda atual (quem ficou) e avisa; a lista não é recarregada.
+          const conflito = lerConflitoDeReserva(falha);
+          if (conflito) {
+            this.substituirLinha(conflito.demanda);
+            this.aviso.set({ texto: conflito.message, conflito: true });
+          } else {
+            this.aviso.set({ texto: this.mensagemDeErro(falha), conflito: false });
+          }
+          this.marcarReservando(demanda.id, false);
+        },
+      });
+  }
+
+  private substituirLinha(atualizada: Demanda): void {
+    this.demandas.update((lista) => lista.map((item) => (item.id === atualizada.id ? atualizada : item)));
+  }
+
+  private marcarReservando(demandaId: number, emAndamento: boolean): void {
+    this.reservando.update((atual) => {
+      const proximo = new Set(atual);
+      if (emAndamento) {
+        proximo.add(demandaId);
+      } else {
+        proximo.delete(demandaId);
+      }
+      return proximo;
+    });
   }
 
   private mensagemDeErro(falha: unknown): string {

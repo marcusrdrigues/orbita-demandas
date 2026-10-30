@@ -13,6 +13,7 @@
 ### Session 2026-10-30
 
 - Q: Todo operador autenticado pode ver e reservar demandas de qualquer fila, ou o acesso é limitado por escopo de fila? → A: Qualquer usuário autenticado vê e reserva demandas de todas as filas; não há escopo por fila nesta versão.
+- Q (decisão do plano): Escopos exigidos nas rotas? → A: Listar, reservar e encerrar exigem `demands` ou `demands:supervise`; sem nenhum dos dois, negado.
 - Q: Encerramento com "sucesso" e motivo de insucesso preenchido: recusar ou ignorar o motivo? → A: Recusar com erro de requisição inválida e não alterar a demanda.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -88,6 +89,7 @@ Cada reserva e cada encerramento deixa um registro de quem fez, o quê, quando e
 ### Edge Cases
 
 - Pedido sem identificação do usuário, ou com usuário inexistente: é recusado como não autenticado.
+- Usuário autenticado sem nenhum dos escopos `demands` ou `demands:supervise`: é negado por falta de permissão em qualquer rota.
 - Reservar uma demanda já encerrada: é recusado com conflito e mensagem clara.
 - Encerrar uma demanda que não está reservada (aberta ou já encerrada): é recusado com conflito e mensagem clara.
 - Demanda inexistente em reserva ou encerramento: resposta de não encontrado.
@@ -105,25 +107,25 @@ Cada reserva e cada encerramento deixa um registro de quem fez, o quê, quando e
 - **FR-002**: O sistema MUST permitir filtrar a lista por fila e por situação (aberta, reservada, encerrada).
 - **FR-003**: O sistema MUST permitir ordenar a lista por número da demanda ou por data da última alteração, nos dois sentidos, com desempate determinístico para que a paginação seja estável.
 - **FR-004**: O sistema MUST recusar com erro de requisição inválida qualquer filtro, ordenação ou parâmetro de paginação desconhecido ou fora do intervalo permitido.
-- **FR-005**: O sistema MUST permitir que qualquer usuário autenticado reserve uma demanda aberta, de qualquer fila, em seu próprio nome; não há restrição de acesso por fila nesta versão.
+- **FR-005**: O sistema MUST permitir que o usuário autenticado com o escopo `demands` ou `demands:supervise` reserve uma demanda aberta, de qualquer fila, em seu próprio nome; não há restrição de acesso por fila nesta versão.
 - **FR-006**: O sistema MUST garantir que, em reservas simultâneas da mesma demanda, exatamente uma tenha sucesso; as demais recebem conflito contendo o nome de quem ficou com a demanda.
 - **FR-007**: O sistema MUST tratar a reserva repetida pelo mesmo usuário como sucesso, sem alterar a demanda e sem gerar novo registro de histórico.
 - **FR-008**: O sistema MUST permitir encerrar uma demanda reservada com resultado "sucesso" ou "insucesso".
-- **FR-009**: O sistema MUST exigir o motivo no encerramento com insucesso e aceitar observação opcional de até 500 caracteres; o corpo do pedido MUST ser validado no servidor. Motivo informado junto com resultado "sucesso" MUST ser recusado como requisição inválida, sem alterar a demanda.
+- **FR-009**: O sistema MUST exigir o motivo (até 40 caracteres) no encerramento com insucesso e aceitar observação opcional de até 500 caracteres; o corpo do pedido MUST ser validado no servidor. Motivo informado junto com resultado "sucesso" MUST ser recusado como requisição inválida, sem alterar a demanda.
 - **FR-010**: O sistema MUST permitir o encerramento somente ao dono da reserva ou a quem tem o escopo `demands:supervise`; os demais recebem negativa de permissão.
 - **FR-011**: O sistema MUST registrar no histórico (quem, qual demanda, qual ação, observação e quando) toda mudança de situação de uma demanda, de forma atômica com a mudança: ou ambos são gravados, ou nenhum.
-- **FR-012**: O sistema MUST identificar o usuário a partir do cabeçalho `x-user-id` e seus escopos a partir do cabeçalho `x-scopes` (lista separada por vírgula), recusando como não autenticado pedido sem usuário válido. Esta é uma autenticação simplificada, própria desta versão mínima.
+- **FR-012**: O sistema MUST identificar o usuário a partir do cabeçalho `x-user-id` e seus escopos a partir do cabeçalho `x-scopes` (lista separada por vírgula), recusando como não autenticado pedido sem usuário válido. Listar, reservar e encerrar MUST exigir o escopo `demands` ou `demands:supervise`; sem nenhum dos dois, o pedido é negado por falta de permissão. Esta é uma autenticação simplificada, própria desta versão mínima.
 - **FR-013**: O sistema MUST fornecer uma base de dados de exemplo com 5 mil demandas, usuários de exemplo e ambiente local de execução do banco, para uso em desenvolvimento e testes.
 - **FR-014**: A tela MUST exibir a lista paginada com filtro de fila e de situação e, em cada demanda aberta, o botão Reservar.
 - **FR-015**: Ao receber conflito numa reserva, a tela MUST exibir a mensagem com o nome de quem ficou com a demanda e atualizar aquela linha sem recarregar a página.
-- **FR-016**: O formulário de encerramento MUST exigir o motivo somente quando o resultado for insucesso, limitar a observação a 500 caracteres e manter o botão de confirmar desabilitado enquanto estiver inválido.
+- **FR-016**: O formulário de encerramento MUST exigir o motivo somente quando o resultado for insucesso, limitar o motivo a 40 e a observação a 500 caracteres, limpar o motivo ao trocar de insucesso para sucesso e manter o botão de confirmar desabilitado enquanto estiver inválido.
 - **FR-017**: O sistema MUST ter ao menos um teste automatizado que prove que duas reservas simultâneas da mesma demanda resultam em um sucesso e um conflito.
 - **FR-018**: As mensagens ao usuário e os erros MUST estar em português do Brasil e não expor detalhes internos.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Usuário**: pessoa que opera a fila; tem identificador e nome (exibido ao perdedor de uma disputa).
-- **Demanda**: item de trabalho que pertence a uma fila. Tem situação (aberta, reservada, encerrada), responsável atual quando reservada, resultado (sucesso ou insucesso), motivo do insucesso, observação de até 500 caracteres e data da última alteração.
+- **Demanda**: item de trabalho que pertence a uma fila. Tem situação (aberta, reservada, encerrada), responsável atual quando reservada, resultado (sucesso ou insucesso), motivo do insucesso (até 40 caracteres), observação de até 500 caracteres e data da última alteração.
 - **Histórico da demanda**: registro imutável de cada mudança; liga demanda, usuário, ação, observação e data.
 
 ## Success Criteria *(mandatory)*
@@ -142,7 +144,8 @@ Cada reserva e cada encerramento deixa um registro de quem fez, o quê, quando e
 - O filtro por fila aceita um valor exato; o filtro por situação aceita um dos três estados. Valores de fila inexistentes devolvem lista vazia, não erro.
 - Paginação padrão de 20 itens, com máximo de 100 por página; ordenação padrão por número da demanda crescente.
 - Autenticação simplificada por cabeçalhos é aceitável por ser uma versão mínima; em produção seria substituída por autenticação real e os cabeçalhos não seriam confiáveis (risco conhecido, fora de escopo).
-- Supervisor também pode reservar demandas como qualquer operador; o escopo `demands:supervise` apenas amplia o encerramento.
+- Quem tem `demands:supervise` pode listar e reservar como qualquer operador (os dois escopos bastam para essas rotas); o escopo `demands:supervise` amplia o encerramento a demandas de outros.
+- O conflito de reserva devolve a demanda atual e o dono (id e nome), para a tela atualizar a linha sem nova consulta.
 - Não há liberação de reserva, reabertura, criação ou edição de demandas, nem escopo de acesso por fila, nesta versão.
 - A observação do histórico copia a observação informada na ação; a reserva não tem observação.
 - Os dados de exemplo são fictícios; nenhum dado pessoal real é usado.
